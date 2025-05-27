@@ -11,12 +11,16 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using MsBox.Avalonia;
 using SixLabors.ImageSharp;
+using ScaleBarOverlay.Services;
 
 namespace ScaleBarOverlay
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private ObservableCollection<ImageTask> _imageTasks = new();
+        private readonly FileDialogService _fileDialogService;
+        private readonly ImageProcessorService _imageProcessorService;
+        private readonly ImageTaskService _imageTaskService;
 
         public ObservableCollection<ImageTask> ImageTasks
         {
@@ -32,47 +36,28 @@ namespace ScaleBarOverlay
         {
             InitializeComponent();
             DataContext = this;
+            
+            // 初始化服务
+            _fileDialogService = new FileDialogService(this);
+            _imageProcessorService = new ImageProcessorService();
+            _imageTaskService = new ImageTaskService(_imageProcessorService);
         }
 
         private async void OnAddClicked(object? sender, RoutedEventArgs e)
         {
             try
             {
-                var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-                {
-                    AllowMultiple = true,
-                    Title = "Choose Images",
-                    FileTypeFilter =
-                    [
-                        new FilePickerFileType("Image Files")
-                        {
-                            Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp"]
-                        }
-                    ]
-                });
-
+                var files = await _fileDialogService.OpenImageFilesAsync();
                 if (files.Count == 0) return;
 
                 var magnificationSelectionDialog = new MagnificationSelectionDialog();
                 var magnificationChoice = await magnificationSelectionDialog.ShowDialog<MagnificationOption>(this);
 
-                var destinationFolder = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-                {
-                    Title = "Select Output Folder",
-                });
-
+                var destinationFolder = await _fileDialogService.OpenFolderAsync();
                 if (destinationFolder.Count == 0) return;
 
-                // 批量创建任务，最后一次性添加，避免频繁UI更新
-                var newTasks = new List<ImageTask>();
-                foreach (var file in files)
-                {
-                    var outputName =
-                        $"{Path.GetFileNameWithoutExtension(file.Name)}_scaleBar{Path.GetExtension(file.Name)}";
-                    var outputPath = Path.Combine(destinationFolder[0].Path.LocalPath, outputName);
-                    var task = new ImageTask(file.Path.AbsolutePath, magnificationChoice, outputPath);
-                    newTasks.Add(task);
-                }
+                // 使用服务创建任务
+                var newTasks = _imageTaskService.CreateImageTasks(files, magnificationChoice, destinationFolder[0]);
                 foreach (var task in newTasks)
                 {
                     ImageTasks.Add(task);
@@ -91,26 +76,7 @@ namespace ScaleBarOverlay
             // 在后台线程处理图片，避免阻塞UI
             await Task.Run(async () =>
             {
-                foreach (var imageTask in ImageTasks)
-                {
-                    var result = await ImageProcessor.ProcessImageAsync(imageTask, 50, 50);
-                    var ext = Path.GetExtension(imageTask.OutputPath).ToLowerInvariant();
-                    switch (ext)
-                    {
-                        case ".jpg" or ".jpeg":
-                            await result.SaveAsJpegAsync(imageTask.OutputPath);
-                            break;
-                        case ".png":
-                            await result.SaveAsPngAsync(imageTask.OutputPath);
-                            break;
-                        case ".bmp":
-                            await result.SaveAsBmpAsync(imageTask.OutputPath);
-                            break;
-                        default:
-                            await result.SaveAsPngAsync(imageTask.OutputPath);
-                            break;
-                    };
-                }
+                await _imageTaskService.ProcessAllTasksAsync(ImageTasks);
             });
 
             await MessageBoxManager
