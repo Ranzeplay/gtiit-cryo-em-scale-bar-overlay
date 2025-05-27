@@ -42,6 +42,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- 右侧图片预览 -->
@@ -49,18 +50,47 @@
                     BorderBrush="Gray"
                     BorderThickness="1"
                     Margin="0,0,0,10">
-                <Image Stretch="Uniform" Source="{Binding SelectedImageSource}" />
+                <Grid>
+                    <Image Stretch="Uniform" Source="{Binding PreviewImageSource}" />
+                    <!-- 加载指示器 -->
+                    <Border IsVisible="{Binding IsPreviewLoading}"
+                            Background="#80000000"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch">
+                        <ProgressBar IsIndeterminate="True" 
+                                    Width="100" 
+                                    Height="10" 
+                                    HorizontalAlignment="Center" 
+                                    VerticalAlignment="Center" />
+                    </Border>
+                    <!-- 无图像时的提示 -->
+                    <TextBlock IsVisible="{Binding PreviewImageSource, Converter={x:Static ObjectConverters.IsNull}}"
+                              Text="选择图像以查看预览" 
+                              HorizontalAlignment="Center" 
+                              VerticalAlignment="Center" 
+                              Opacity="0.5" />
+                </Grid>
             </Border>
 
-            <!-- 底部按钮 -->
-            <StackPanel Grid.Row="1"
+            <!-- 预览控制按钮 - 放在第二行 -->
+            <StackPanel Grid.Row="1" 
+                        Orientation="Horizontal" 
+                        Margin="0,0,0,10"
+                        HorizontalAlignment="Left">
+                <CheckBox Content="显示处理预览" IsChecked="{Binding !IsOriginalPreview}" Margin="0,0,10,0" />
+                <Button Content="刷新预览" Margin="10,0,0,0" Click="OnRefreshPreviewClicked" />
+            </StackPanel>
+            
+            <!-- 底部按钮 - 放在第三行 -->
+            <StackPanel Grid.Row="2"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"
-                        Margin="0,5,0,0">
+                        Margin="0,0,0,0">
                 <Button Content="添加" Width="80" Margin="0,0,10,0" Click="OnAddClicked" />
                 <Button Content="运行" Width="80" Click="OnRunClicked" />
             </StackPanel>
         </Grid>
     </Grid>
 </Window>
+
