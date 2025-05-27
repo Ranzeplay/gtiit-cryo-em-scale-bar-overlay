@@ -12,3 +12,4 @@ public class MagnificationOption(int ratio, double pixels, int scaleBarNanometer
 
     public string DisplayText => $"{Ratio}x";
 }
+

@@ -15,7 +15,7 @@ public class ImageTask
         ImagePath = imagePath;
         Magnification = magnification;
         OutputPath = outputPath;
-        ScaleBarMargin = 50; // 默认值
+        ScaleBarMargin = 50; // Default value
     }
 }
 

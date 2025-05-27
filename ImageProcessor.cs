@@ -11,13 +11,13 @@ public class ImageProcessor
 {
     public static async Task<Image> ProcessImageAsync(ImageTask task, int marginLeft, int marginBottom)
     {
-        // 读取图像
+        // Read the image
         var image = await Image.LoadAsync(task.ImagePath);
 
-        // 计算比例尺长度（像素）
+        // Calculate the scale bar length (in pixels)
         double pixelLength = task.Magnification.PixelLength * task.Magnification.ScaleBarNanometers / 100.0;
         
-        // 比例尺参数
+        // Scale bar parameters
         int offset = marginLeft;
         int height = image.Height;
         int rectX1 = offset;
@@ -25,11 +25,11 @@ public class ImageProcessor
         int rectX2 = offset + (int)pixelLength;
         int rectY2 = height - marginBottom;
         
-        // 绘制比例尺矩形
+        // Draw the scale bar rectangle
         var rectangle = new RectangleF(rectX1, rectY1, rectX2 - rectX1, rectY2 - rectY1);
         image.Mutate(ctx => ctx.Fill(Color.White, rectangle));
         
-        // 比例尺文字
+        // Scale bar text
         var fontFamily = SystemFonts.Get("Arial");
         var font = fontFamily.CreateFont(72, FontStyle.Bold);
         
@@ -37,7 +37,7 @@ public class ImageProcessor
         int textX = rectX1;
         int textY = rectY1 - 90;
         
-        // 绘制文字
+        // Draw the text
         var textOptions = new RichTextOptions(font)
         {
             Origin = new PointF(textX, textY)
@@ -48,7 +48,7 @@ public class ImageProcessor
         return image;
     }
 
-    // 保留原有同步方法以兼容调用
+    // Retain the original synchronous method for compatibility
     public static void ProcessImage(ImageTask task, int marginLeft, int marginBottom)
     {
         ProcessImageAsync(task, marginLeft, marginBottom).GetAwaiter().GetResult();

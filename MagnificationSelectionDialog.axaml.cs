@@ -41,3 +41,4 @@ public partial class MagnificationSelectionDialog : Window
         Close(null);
     }
 }
+

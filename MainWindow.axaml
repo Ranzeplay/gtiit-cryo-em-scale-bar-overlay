@@ -10,11 +10,11 @@
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="10" /> <!-- 间隔 -->
+            <ColumnDefinition Width="10" /> <!-- Spacing -->
             <ColumnDefinition Width="300" />
         </Grid.ColumnDefinitions>
 
-        <!-- 左侧 DataGrid 占用整个左侧空间 -->
+        <!-- DataGrid takes the entire left space -->
         <DataGrid Grid.Column="0"
                   ItemsSource="{Binding ImageTasks}"
                   AutoGenerateColumns="False"
@@ -25,19 +25,19 @@
                   Name="ImagesDataGrid"
                   SelectionChanged="OnDataGridSelectionChanged">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="图像路径"
+                <DataGridTextColumn Header="Image Path"
                                     Binding="{Binding ImagePath}"
                                     Width="*" />
-                <DataGridTextColumn Header="放大倍率"
+                <DataGridTextColumn Header="Magnification"
                                     Binding="{Binding Magnification.DisplayText}"
                                     Width="Auto" />
-                <DataGridTextColumn Header="输出路径"
+                <DataGridTextColumn Header="Output Path"
                                     Binding="{Binding OutputPath}"
                                     Width="*" />
             </DataGrid.Columns>
         </DataGrid>
 
-        <!-- 右侧布局 -->
+        <!-- Right layout -->
         <Grid Grid.Column="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
@@ -46,14 +46,14 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- 右侧图片预览 -->
+            <!-- Right side image preview -->
             <Border Grid.Row="0"
                     BorderBrush="Gray"
                     BorderThickness="1"
                     Margin="0,0,0,10">
                 <Grid>
                     <Image Stretch="Uniform" Source="{Binding PreviewImageSource}" />
-                    <!-- 加载指示器 -->
+                    <!-- Loading indicator -->
                     <Border IsVisible="{Binding IsPreviewLoading}"
                             Background="#80000000"
                             HorizontalAlignment="Stretch"
@@ -64,16 +64,16 @@
                                     HorizontalAlignment="Center" 
                                     VerticalAlignment="Center" />
                     </Border>
-                    <!-- 无图像时的提示 -->
+                    <!-- No image hint -->
                     <TextBlock IsVisible="{Binding PreviewImageSource, Converter={x:Static ObjectConverters.IsNull}}"
-                              Text="选择图像以查看预览" 
+                              Text="Select an image to view preview" 
                               HorizontalAlignment="Center" 
                               VerticalAlignment="Center" 
                               Opacity="0.5" />
                 </Grid>
             </Border>
 
-            <!-- 边距控制 - 优化后的控件 -->
+            <!-- Margin control - optimized controls -->
             <Grid Grid.Row="1" Margin="0,0,0,15">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -82,7 +82,7 @@
                 </Grid.RowDefinitions>
                 
                 <TextBlock Grid.Row="0" 
-                           Text="缩放条边距:" 
+                           Text="Scale Bar Margin:" 
                            VerticalAlignment="Center"
                            FontWeight="SemiBold"
                            Margin="0,0,0,8"/>
@@ -97,7 +97,7 @@
                         Margin="0,0,0,10"
                         IsEnabled="{Binding !!SelectedImageTask}"/>
                 
-                <!-- 数字输入区域 - 独立放置在滑块下方 -->
+                <!-- Numeric input area - placed independently below slider -->
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -105,7 +105,7 @@
                     </Grid.ColumnDefinitions>
                     
                     <TextBlock Grid.Column="0" 
-                              Text="精确数值:" 
+                              Text="Precise Value:" 
                               VerticalAlignment="Center"
                               Margin="0,0,10,0"/>
                     
@@ -137,23 +137,23 @@
                 </Grid>
             </Grid>
 
-            <!-- 预览控制按钮 - 放在第三行 -->
+            <!-- Preview control buttons - in the third row -->
             <StackPanel Grid.Row="2" 
                         Orientation="Horizontal" 
                         Margin="0,0,0,10"
                         HorizontalAlignment="Left">
-                <CheckBox Content="显示处理预览" IsChecked="{Binding !IsOriginalPreview}" Margin="0,0,10,0" />
-                <Button Content="刷新预览" Margin="10,0,0,0" Click="OnRefreshPreviewClicked" />
+                <CheckBox Content="Show Processed Preview" IsChecked="{Binding !IsOriginalPreview}" Margin="0,0,10,0" />
+                <Button Content="Refresh Preview" Margin="10,0,0,0" Click="OnRefreshPreviewClicked" />
             </StackPanel>
             
-            <!-- 底部按钮 - 放在第四行 -->
+            <!-- Bottom buttons - in the fourth row -->
             <StackPanel Grid.Row="3"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"
                         Margin="0,0,0,0">
-                <Button Content="添加" Width="80" Margin="0,0,10,0" Click="OnAddClicked" />
-                <Button Content="运行" Width="80" Click="OnRunClicked" />
+                <Button Content="Add" Width="80" Margin="0,0,10,0" Click="OnAddClicked" />
+                <Button Content="Run" Width="80" Click="OnRunClicked" />
             </StackPanel>
         </Grid>
     </Grid>

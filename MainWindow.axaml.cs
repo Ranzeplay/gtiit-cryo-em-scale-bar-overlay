@@ -29,8 +29,8 @@ namespace ScaleBarOverlay
         private bool _isOriginalPreview = true;
         private CancellationTokenSource? _previewCancellationTokenSource;
         private bool _isPreviewLoading;
-        private int _scaleBarMargin = 50;  // 新添加的边距属性，默认50
-        private bool _isUpdatingPreview = false; // 添加标志以防止并发更新
+        private int _scaleBarMargin = 50;  // Newly added margin property, default is 50
+        private bool _isUpdatingPreview = false; // Added flag to prevent concurrent updates
 
         public ObservableCollection<ImageTask> ImageTasks
         {
@@ -42,7 +42,7 @@ namespace ScaleBarOverlay
             }
         }
         
-        // 新添加的ScaleBarMargin属性
+        // Newly added ScaleBarMargin property
         public int ScaleBarMargin
         {
             get => _scaleBarMargin;
@@ -53,7 +53,7 @@ namespace ScaleBarOverlay
                     _scaleBarMargin = value;
                     OnPropertyChanged();
                     
-                    // 当边距改变时，如果有选中的任务，更新其边距并刷新预览
+                    // When the margin changes, if there is a selected task, update its margin and refresh the preview
                     if (_selectedImageTask != null)
                     {
                         _selectedImageTask.ScaleBarMargin = value;
@@ -73,7 +73,7 @@ namespace ScaleBarOverlay
                     _selectedImageTask = value;
                     OnPropertyChanged();
                     
-                    // 当选择新任务时，更新边距控制器的值
+                    // When selecting a new task, update the margin controller value
                     if (value != null)
                     {
                         _scaleBarMargin = value.ScaleBarMargin;
@@ -115,7 +115,7 @@ namespace ScaleBarOverlay
             InitializeComponent();
             DataContext = this;
             
-            // 初始化服务
+            // Initialize services
             _fileDialogService = new FileDialogService(this);
             _imageProcessorService = new ImageProcessorService();
             _imageTaskService = new ImageTaskService(_imageProcessorService);
@@ -134,7 +134,7 @@ namespace ScaleBarOverlay
                 var destinationFolder = await _fileDialogService.OpenFolderAsync();
                 if (destinationFolder.Count == 0) return;
 
-                // 使用服务创建任务
+                // Use the service to create tasks
                 var newTasks = _imageTaskService.CreateImageTasks(files, magnificationChoice, destinationFolder[0]);
                 foreach (var task in newTasks)
                 {
@@ -144,21 +144,21 @@ namespace ScaleBarOverlay
             catch (Exception ex)
             {
                 await MessageBoxManager
-                    .GetMessageBoxStandard("错误", $"添加图片时出错: {ex.Message}")
+                    .GetMessageBoxStandard("Error", $"Error adding images: {ex.Message}")
                     .ShowAsPopupAsync(this);
             }
         }
 
         private async void OnRunClicked(object? sender, RoutedEventArgs e)
         {
-            // 在后台线程处理图片，避免阻塞UI
+            // Process images in the background thread to avoid blocking the UI
             await Task.Run(async () =>
             {
                 await _imageTaskService.ProcessAllTasksAsync(ImageTasks);
             });
 
             await MessageBoxManager
-                .GetMessageBoxStandard("完成", "所有图像处理任务已完成。")
+                .GetMessageBoxStandard("Complete", "All image processing tasks have been completed.")
                 .ShowAsPopupAsync(this);
 
             _imageTasks.Clear();
@@ -180,7 +180,7 @@ namespace ScaleBarOverlay
             {
                 if (_previewImageSource != value)
                 {
-                    _previewImageSource?.Dispose(); // 释放旧的位图资源
+                    _previewImageSource?.Dispose(); // Release old bitmap resources
                     _previewImageSource = value;
                     OnPropertyChanged();
                 }
@@ -192,7 +192,7 @@ namespace ScaleBarOverlay
             if (sender is DataGrid dataGrid && dataGrid.SelectedItem is ImageTask selectedTask)
             {
                 SelectedImageTask = selectedTask;
-                // 更新边距为选中任务的边距值
+                // Update the margin to the selected task's margin value
                 ScaleBarMargin = selectedTask.ScaleBarMargin;
                 await UpdatePreviewImage();
             }
@@ -205,7 +205,7 @@ namespace ScaleBarOverlay
         
         private async Task UpdatePreviewImage()
         {
-            // 如果已经在更新预览图像，则跳过此次调用
+            // If already updating the preview image, skip this call
             if (_isUpdatingPreview || _selectedImageTask == null)
             {
                 if (_selectedImageTask == null)
@@ -215,24 +215,24 @@ namespace ScaleBarOverlay
 
             try
             {
-                _isUpdatingPreview = true; // 设置标志，表示正在更新预览
+                _isUpdatingPreview = true; // Set flag indicating preview is being updated
                 
-                // 取消任何正在进行的预览操作
+                // Cancel any ongoing preview operations
                 _previewCancellationTokenSource?.Cancel();
                 _previewCancellationTokenSource?.Dispose();
                 _previewCancellationTokenSource = new CancellationTokenSource();
                 var cancellationToken = _previewCancellationTokenSource.Token;
                 
-                // 设置加载中标志
+                // Set loading flag
                 IsPreviewLoading = true;
                 
-                // 使用await处理延迟，而不是Task.ContinueWith
+                // Use await to handle delay instead of Task.ContinueWith
                 try
                 {
-                    // 短暂延迟，避免频繁更新
+                    // Short delay to avoid frequent updates
                     await Task.Delay(150, cancellationToken);
                     
-                    // 检查文件是否存在
+                    // Check if file exists
                     if (!File.Exists(_selectedImageTask.ImagePath))
                     {
                         await Dispatcher.UIThread.InvokeAsync(() => 
@@ -243,7 +243,7 @@ namespace ScaleBarOverlay
                         return;
                     }
 
-                    // 根据预览模式处理图像
+                    // Process image based on preview mode
                     if (IsOriginalPreview)
                     {
                         await LoadOriginalImageSafe(_selectedImageTask.ImagePath, cancellationToken);
@@ -255,7 +255,7 @@ namespace ScaleBarOverlay
                 }
                 catch (OperationCanceledException)
                 {
-                    // 预览被取消，不做任何处理
+                    // Preview was canceled, do nothing
                     IsPreviewLoading = false;
                 }
                 catch (Exception ex)
@@ -267,7 +267,7 @@ namespace ScaleBarOverlay
                             PreviewImageSource = null;
                             IsPreviewLoading = false;
                             await MessageBoxManager
-                                .GetMessageBoxStandard("错误", $"加载图像预览失败: {ex.Message}")
+                                .GetMessageBoxStandard("Error", $"Failed to load image preview: {ex.Message}")
                                 .ShowAsPopupAsync(this);
                         });
                     }
@@ -276,20 +276,20 @@ namespace ScaleBarOverlay
             catch (Exception ex)
             {
                 await MessageBoxManager
-                    .GetMessageBoxStandard("错误", $"处理预览图像时出错: {ex.Message}")
+                    .GetMessageBoxStandard("Error", $"Error processing preview image: {ex.Message}")
                     .ShowAsPopupAsync(this);
                 
                 IsPreviewLoading = false;
             }
             finally
             {
-                _isUpdatingPreview = false; // 无论成功还是失败，都重置标志
+                _isUpdatingPreview = false; // Reset flag regardless of success or failure
             }
         }
         
         private async Task LoadOriginalImageSafe(string imagePath, CancellationToken cancellationToken)
         {
-            // 在真正的后台线程中执行文件操作
+            // Perform file operations on a true background thread
             await Task.Run(async () =>
             {
                 using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
@@ -301,7 +301,7 @@ namespace ScaleBarOverlay
                     
                 memoryStream.Position = 0;
                 
-                // 在UI线程创建位图并更新UI
+                // Create bitmap and update UI on the UI thread
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     try
@@ -319,10 +319,10 @@ namespace ScaleBarOverlay
         
         private async Task GenerateProcessedPreviewSafe(ImageTask task, CancellationToken cancellationToken)
         {
-            // 在真正的后台线程中执行所有处理操作
+            // Perform all processing operations on a true background thread
             await Task.Run(async () =>
             {
-                // 处理图像
+                // Process image
                 Image? processedImage = null;
                 try
                 {
@@ -331,7 +331,7 @@ namespace ScaleBarOverlay
                     if (cancellationToken.IsCancellationRequested)
                         return;
                         
-                    // 将处理后的图像转换为内存流
+                    // Convert processed image to memory stream
                     using var memStream = new MemoryStream();
                     await processedImage.SaveAsPngAsync(memStream, cancellationToken);
                     
@@ -340,7 +340,7 @@ namespace ScaleBarOverlay
                         
                     memStream.Position = 0;
                     
-                    // 在UI线程创建位图并更新UI
+                    // Create bitmap and update UI on the UI thread
                     await Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         try 
@@ -356,7 +356,7 @@ namespace ScaleBarOverlay
                 }
                 finally
                 {
-                    // 确保释放资源
+                    // Ensure resources are released
                     processedImage?.Dispose();
                 }
             }, cancellationToken);
