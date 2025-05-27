@@ -80,38 +80,38 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                
-                <TextBlock Grid.Row="0" 
-                           Text="Scale Bar Margin:" 
+
+                <TextBlock Grid.Row="0"
+                           Text="Scale Bar Margin:"
                            VerticalAlignment="Center"
                            FontWeight="SemiBold"
                            Margin="0,0,0,8"/>
-                
+
                 <Slider Grid.Row="1"
-                        Minimum="10" 
-                        Maximum="200" 
-                        Value="{Binding ScaleBarMargin}" 
+                        Minimum="10"
+                        Maximum="200"
+                        Value="{Binding ScaleBarMargin}"
                         TickFrequency="10"
                         TickPlacement="BottomRight"
                         IsSnapToTickEnabled="True"
                         Margin="0,0,0,10"
                         IsEnabled="{Binding !!SelectedImageTask}"/>
-                
+
                 <!-- Numeric input area - placed independently below slider -->
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    
-                    <TextBlock Grid.Column="0" 
-                              Text="Precise Value:" 
+
+                    <TextBlock Grid.Column="0"
+                              Text="Precise Value:"
                               VerticalAlignment="Center"
                               Margin="0,0,10,0"/>
-                    
+
                     <NumericUpDown Grid.Column="1"
-                                  Value="{Binding ScaleBarMargin}" 
-                                  Minimum="10" 
+                                  Value="{Binding ScaleBarMargin}"
+                                  Minimum="10"
                                   Maximum="200"
                                   Width="120"
                                   HorizontalContentAlignment="Center"
@@ -138,14 +138,13 @@
             </Grid>
 
             <!-- Preview control buttons - in the third row -->
-            <StackPanel Grid.Row="2" 
-                        Orientation="Horizontal" 
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
                         Margin="0,0,0,10"
                         HorizontalAlignment="Left">
                 <CheckBox Content="Show Processed Preview" IsChecked="{Binding !IsOriginalPreview}" Margin="0,0,10,0" />
-                <Button Content="Refresh Preview" Margin="10,0,0,0" Click="OnRefreshPreviewClicked" />
             </StackPanel>
-            
+
             <!-- Bottom buttons - in the fourth row -->
             <StackPanel Grid.Row="3"
                         Orientation="Horizontal"
@@ -158,4 +157,5 @@
         </Grid>
     </Grid>
 </Window>
+
 
