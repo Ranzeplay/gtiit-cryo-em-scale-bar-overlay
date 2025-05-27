@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Avalonia.Controls;
@@ -9,12 +10,13 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using MsBox.Avalonia;
+using SixLabors.ImageSharp;
 
 namespace ScaleBarOverlay
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private ObservableCollection<ImageTask> _imageTasks = [];
+        private ObservableCollection<ImageTask> _imageTasks = new();
 
         public ObservableCollection<ImageTask> ImageTasks
         {
@@ -30,7 +32,6 @@ namespace ScaleBarOverlay
         {
             InitializeComponent();
             DataContext = this;
-            ImageTasks = [];
         }
 
         private async void OnAddClicked(object? sender, RoutedEventArgs e)
@@ -55,8 +56,6 @@ namespace ScaleBarOverlay
                 var magnificationSelectionDialog = new MagnificationSelectionDialog();
                 var magnificationChoice = await magnificationSelectionDialog.ShowDialog<MagnificationOption>(this);
 
-                if (magnificationChoice == null) return;
-
                 var destinationFolder = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
                 {
                     Title = "Select Output Folder",
@@ -64,32 +63,61 @@ namespace ScaleBarOverlay
 
                 if (destinationFolder.Count == 0) return;
 
-                await Task.Run(() =>
+                // 批量创建任务，最后一次性添加，避免频繁UI更新
+                var newTasks = new List<ImageTask>();
+                foreach (var file in files)
                 {
-                    foreach (var file in files)
-                    {
-                        var outputName =
-                            $"{Path.GetFileNameWithoutExtension(file.Name)}_scaleBar{Path.GetExtension(file.Name)}";
-                        var outputPath = Path.Combine(destinationFolder[0].Path.LocalPath, outputName);
-                        var task = new ImageTask(file.Path.AbsolutePath, magnificationChoice, outputPath);
-
-                        // 在UI线程上更新集合
-                        Dispatcher.UIThread.InvokeAsync(() => { ImageTasks.Add(task); });
-                    }
-                });
+                    var outputName =
+                        $"{Path.GetFileNameWithoutExtension(file.Name)}_scaleBar{Path.GetExtension(file.Name)}";
+                    var outputPath = Path.Combine(destinationFolder[0].Path.LocalPath, outputName);
+                    var task = new ImageTask(file.Path.AbsolutePath, magnificationChoice, outputPath);
+                    newTasks.Add(task);
+                }
+                foreach (var task in newTasks)
+                {
+                    ImageTasks.Add(task);
+                }
             }
             catch (Exception ex)
             {
-                // 添加适当的错误处理
                 await MessageBoxManager
                     .GetMessageBoxStandard("错误", $"添加图片时出错: {ex.Message}")
                     .ShowAsPopupAsync(this);
             }
         }
 
-        private void OnRunClicked(object? sender, RoutedEventArgs e)
+        private async void OnRunClicked(object? sender, RoutedEventArgs e)
         {
-            throw new System.NotImplementedException();
+            // 在后台线程处理图片，避免阻塞UI
+            await Task.Run(async () =>
+            {
+                foreach (var imageTask in ImageTasks)
+                {
+                    var result = await ImageProcessor.ProcessImageAsync(imageTask, 50, 50);
+                    var ext = Path.GetExtension(imageTask.OutputPath).ToLowerInvariant();
+                    switch (ext)
+                    {
+                        case ".jpg" or ".jpeg":
+                            await result.SaveAsJpegAsync(imageTask.OutputPath);
+                            break;
+                        case ".png":
+                            await result.SaveAsPngAsync(imageTask.OutputPath);
+                            break;
+                        case ".bmp":
+                            await result.SaveAsBmpAsync(imageTask.OutputPath);
+                            break;
+                        default:
+                            await result.SaveAsPngAsync(imageTask.OutputPath);
+                            break;
+                    };
+                }
+            });
+
+            await MessageBoxManager
+                .GetMessageBoxStandard("完成", "所有图像处理任务已完成。")
+                .ShowAsPopupAsync(this);
+
+            _imageTasks.Clear();
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
