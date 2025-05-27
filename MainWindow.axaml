@@ -43,6 +43,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- 右侧图片预览 -->
@@ -72,8 +73,72 @@
                 </Grid>
             </Border>
 
-            <!-- 预览控制按钮 - 放在第二行 -->
-            <StackPanel Grid.Row="1" 
+            <!-- 边距控制 - 优化后的控件 -->
+            <Grid Grid.Row="1" Margin="0,0,0,15">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <TextBlock Grid.Row="0" 
+                           Text="缩放条边距:" 
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,8"/>
+                
+                <Slider Grid.Row="1"
+                        Minimum="10" 
+                        Maximum="200" 
+                        Value="{Binding ScaleBarMargin}" 
+                        TickFrequency="10"
+                        TickPlacement="BottomRight"
+                        IsSnapToTickEnabled="True"
+                        Margin="0,0,0,10"
+                        IsEnabled="{Binding !!SelectedImageTask}"/>
+                
+                <!-- 数字输入区域 - 独立放置在滑块下方 -->
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0" 
+                              Text="精确数值:" 
+                              VerticalAlignment="Center"
+                              Margin="0,0,10,0"/>
+                    
+                    <NumericUpDown Grid.Column="1"
+                                  Value="{Binding ScaleBarMargin}" 
+                                  Minimum="10" 
+                                  Maximum="200"
+                                  Width="120"
+                                  HorizontalContentAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  Padding="5"
+                                  FontSize="14"
+                                  FontWeight="SemiBold"
+                                  Foreground="Black"
+                                  ButtonSpinnerLocation="Right"
+                                  ShowButtonSpinner="True"
+                                  AllowSpin="True"
+                                  ClipValueToMinMax="True"
+                                  FormatString="0"
+                                  IsEnabled="{Binding !!SelectedImageTask}">
+                        <NumericUpDown.Styles>
+                            <Style Selector="NumericUpDown /template/ TextBox">
+                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            </Style>
+                        </NumericUpDown.Styles>
+                    </NumericUpDown>
+                </Grid>
+            </Grid>
+
+            <!-- 预览控制按钮 - 放在第三行 -->
+            <StackPanel Grid.Row="2" 
                         Orientation="Horizontal" 
                         Margin="0,0,0,10"
                         HorizontalAlignment="Left">
@@ -81,8 +146,8 @@
                 <Button Content="刷新预览" Margin="10,0,0,0" Click="OnRefreshPreviewClicked" />
             </StackPanel>
             
-            <!-- 底部按钮 - 放在第三行 -->
-            <StackPanel Grid.Row="2"
+            <!-- 底部按钮 - 放在第四行 -->
+            <StackPanel Grid.Row="3"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"

@@ -9,12 +9,12 @@ namespace ScaleBarOverlay.Services
 {
     public class ImageProcessorService
     {
-        private const int DefaultScaleBarMarginLeft = 50;
-        private const int DefaultScaleBarMarginBottom = 50;
+        private const int DefaultScaleBarMargin = 50;
         
         public async Task<Image> ProcessImageAsync(ImageTask task)
         {
-            return await ProcessImageAsync(task, DefaultScaleBarMarginLeft, DefaultScaleBarMarginBottom);
+            // 使用任务中的边距
+            return await ProcessImageAsync(task, task.ScaleBarMargin, task.ScaleBarMargin);
         }
 
         public async Task<Image> ProcessImageAsync(ImageTask task, int marginLeft, int marginBottom)

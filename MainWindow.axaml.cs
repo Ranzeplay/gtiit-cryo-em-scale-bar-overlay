@@ -29,6 +29,8 @@ namespace ScaleBarOverlay
         private bool _isOriginalPreview = true;
         private CancellationTokenSource? _previewCancellationTokenSource;
         private bool _isPreviewLoading;
+        private int _scaleBarMargin = 50;  // 新添加的边距属性，默认50
+        private bool _isUpdatingPreview = false; // 添加标志以防止并发更新
 
         public ObservableCollection<ImageTask> ImageTasks
         {
@@ -37,6 +39,47 @@ namespace ScaleBarOverlay
             {
                 _imageTasks = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
+            }
+        }
+        
+        // 新添加的ScaleBarMargin属性
+        public int ScaleBarMargin
+        {
+            get => _scaleBarMargin;
+            set
+            {
+                if (_scaleBarMargin != value)
+                {
+                    _scaleBarMargin = value;
+                    OnPropertyChanged();
+                    
+                    // 当边距改变时，如果有选中的任务，更新其边距并刷新预览
+                    if (_selectedImageTask != null)
+                    {
+                        _selectedImageTask.ScaleBarMargin = value;
+                        _ = UpdatePreviewImage();
+                    }
+                }
+            }
+        }
+        
+        public ImageTask? SelectedImageTask
+        {
+            get => _selectedImageTask;
+            set
+            {
+                if (_selectedImageTask != value)
+                {
+                    _selectedImageTask = value;
+                    OnPropertyChanged();
+                    
+                    // 当选择新任务时，更新边距控制器的值
+                    if (value != null)
+                    {
+                        _scaleBarMargin = value.ScaleBarMargin;
+                        OnPropertyChanged(nameof(ScaleBarMargin));
+                    }
+                }
             }
         }
         
@@ -148,7 +191,9 @@ namespace ScaleBarOverlay
         {
             if (sender is DataGrid dataGrid && dataGrid.SelectedItem is ImageTask selectedTask)
             {
-                _selectedImageTask = selectedTask;
+                SelectedImageTask = selectedTask;
+                // 更新边距为选中任务的边距值
+                ScaleBarMargin = selectedTask.ScaleBarMargin;
                 await UpdatePreviewImage();
             }
         }
@@ -160,74 +205,73 @@ namespace ScaleBarOverlay
         
         private async Task UpdatePreviewImage()
         {
-            if (_selectedImageTask == null)
+            // 如果已经在更新预览图像，则跳过此次调用
+            if (_isUpdatingPreview || _selectedImageTask == null)
             {
-                PreviewImageSource = null;
+                if (_selectedImageTask == null)
+                    PreviewImageSource = null;
                 return;
             }
 
             try
             {
+                _isUpdatingPreview = true; // 设置标志，表示正在更新预览
+                
                 // 取消任何正在进行的预览操作
                 _previewCancellationTokenSource?.Cancel();
                 _previewCancellationTokenSource?.Dispose();
                 _previewCancellationTokenSource = new CancellationTokenSource();
                 var cancellationToken = _previewCancellationTokenSource.Token;
                 
-                // 在UI线程设置正在加载标志
-                await Dispatcher.UIThread.InvokeAsync(() => IsPreviewLoading = true);
+                // 设置加载中标志
+                IsPreviewLoading = true;
                 
-                // 创建一个延迟任务，等待几百毫秒后再开始真正的图像处理
-                // 这样如果用户快速切换，可以避免不必要的处理操作
-                await Task.Delay(200, cancellationToken).ContinueWith(async _ => 
+                // 使用await处理延迟，而不是Task.ContinueWith
+                try
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    // 短暂延迟，避免频繁更新
+                    await Task.Delay(150, cancellationToken);
+                    
+                    // 检查文件是否存在
+                    if (!File.Exists(_selectedImageTask.ImagePath))
+                    {
+                        await Dispatcher.UIThread.InvokeAsync(() => 
+                        {
+                            PreviewImageSource = null;
+                            IsPreviewLoading = false;
+                        });
                         return;
-                        
-                    try
-                    {
-                        // 检查文件是否存在
-                        if (!File.Exists(_selectedImageTask.ImagePath))
-                        {
-                            await Dispatcher.UIThread.InvokeAsync(() => 
-                            {
-                                PreviewImageSource = null;
-                                IsPreviewLoading = false;
-                            });
-                            return;
-                        }
+                    }
 
-                        // 根据预览模式选择不同的加载方式
-                        if (IsOriginalPreview)
-                        {
-                            // 加载原始图像
-                            await LoadOriginalImage(_selectedImageTask.ImagePath, cancellationToken);
-                        }
-                        else
-                        {
-                            // 在后台线程处理图像并生成预览
-                            await GenerateProcessedPreview(_selectedImageTask, cancellationToken);
-                        }
-                    }
-                    catch (OperationCanceledException)
+                    // 根据预览模式处理图像
+                    if (IsOriginalPreview)
                     {
-                        // 预览被取消，不做任何处理
+                        await LoadOriginalImageSafe(_selectedImageTask.ImagePath, cancellationToken);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        if (!cancellationToken.IsCancellationRequested)
-                        {
-                            await Dispatcher.UIThread.InvokeAsync(async () =>
-                            {
-                                PreviewImageSource = null;
-                                IsPreviewLoading = false;
-                                await MessageBoxManager
-                                    .GetMessageBoxStandard("错误", $"加载图像预览失败: {ex.Message}")
-                                    .ShowAsPopupAsync(this);
-                            });
-                        }
+                        await GenerateProcessedPreviewSafe(_selectedImageTask, cancellationToken);
                     }
-                }, TaskScheduler.Default);
+                }
+                catch (OperationCanceledException)
+                {
+                    // 预览被取消，不做任何处理
+                    IsPreviewLoading = false;
+                }
+                catch (Exception ex)
+                {
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        await Dispatcher.UIThread.InvokeAsync(async () =>
+                        {
+                            PreviewImageSource = null;
+                            IsPreviewLoading = false;
+                            await MessageBoxManager
+                                .GetMessageBoxStandard("错误", $"加载图像预览失败: {ex.Message}")
+                                .ShowAsPopupAsync(this);
+                        });
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -237,69 +281,85 @@ namespace ScaleBarOverlay
                 
                 IsPreviewLoading = false;
             }
+            finally
+            {
+                _isUpdatingPreview = false; // 无论成功还是失败，都重置标志
+            }
         }
         
-        private async Task LoadOriginalImage(string imagePath, CancellationToken cancellationToken)
+        private async Task LoadOriginalImageSafe(string imagePath, CancellationToken cancellationToken)
         {
-            // 在后台线程加载图像文件
-            using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
-            using var memoryStream = new MemoryStream();
-            await fileStream.CopyToAsync(memoryStream, cancellationToken);
-            
-            if (cancellationToken.IsCancellationRequested)
-                return;
-                
-            memoryStream.Position = 0;
-            
-            // 在UI线程创建位图并更新UI
-            await Dispatcher.UIThread.InvokeAsync(() =>
+            // 在真正的后台线程中执行文件操作
+            await Task.Run(async () =>
             {
+                using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
+                using var memoryStream = new MemoryStream();
+                await fileStream.CopyToAsync(memoryStream, cancellationToken);
+                
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+                    
+                memoryStream.Position = 0;
+                
+                // 在UI线程创建位图并更新UI
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    try
+                    {
+                        var bitmap = new Avalonia.Media.Imaging.Bitmap(memoryStream);
+                        PreviewImageSource = bitmap;
+                    }
+                    finally
+                    {
+                        IsPreviewLoading = false;
+                    }
+                });
+            }, cancellationToken);
+        }
+        
+        private async Task GenerateProcessedPreviewSafe(ImageTask task, CancellationToken cancellationToken)
+        {
+            // 在真正的后台线程中执行所有处理操作
+            await Task.Run(async () =>
+            {
+                // 处理图像
+                Image? processedImage = null;
                 try
                 {
-                    var bitmap = new Avalonia.Media.Imaging.Bitmap(memoryStream);
-                    PreviewImageSource = bitmap;
+                    processedImage = await _imageProcessorService.ProcessImageAsync(task);
+                    
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+                        
+                    // 将处理后的图像转换为内存流
+                    using var memStream = new MemoryStream();
+                    await processedImage.SaveAsPngAsync(memStream, cancellationToken);
+                    
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+                        
+                    memStream.Position = 0;
+                    
+                    // 在UI线程创建位图并更新UI
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        try 
+                        {
+                            var bitmap = new Avalonia.Media.Imaging.Bitmap(memStream);
+                            PreviewImageSource = bitmap;
+                        }
+                        finally
+                        {
+                            IsPreviewLoading = false;
+                        }
+                    });
                 }
                 finally
                 {
-                    IsPreviewLoading = false;
+                    // 确保释放资源
+                    processedImage?.Dispose();
                 }
-            });
-        }
-        
-        private async Task GenerateProcessedPreview(ImageTask task, CancellationToken cancellationToken)
-        {
-            // 在后台线程处理图像
-            Image processedImage = await _imageProcessorService.ProcessImageAsync(task);
-            
-            if (cancellationToken.IsCancellationRequested)
-            {
-                processedImage.Dispose();
-                return;
-            }
-            
-            // 将处理后的图像转换为内存流
-            using var memStream = new MemoryStream();
-            await processedImage.SaveAsPngAsync(memStream, cancellationToken);
-            processedImage.Dispose();
-            
-            if (cancellationToken.IsCancellationRequested)
-                return;
-                
-            memStream.Position = 0;
-            
-            // 在UI线程创建位图并更新UI
-            await Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                try 
-                {
-                    var bitmap = new Avalonia.Media.Imaging.Bitmap(memStream);
-                    PreviewImageSource = bitmap;
-                }
-                finally
-                {
-                    IsPreviewLoading = false;
-                }
-            });
+            }, cancellationToken);
         }
     }
 }
