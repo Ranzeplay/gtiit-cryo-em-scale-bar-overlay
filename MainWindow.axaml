@@ -1,0 +1,66 @@
+<Window xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:local="clr-namespace:ScaleBarOverlay"
+                    x:DataType="local:MainWindow"
+                    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+                    x:Class="ScaleBarOverlay.MainWindow"
+                    Title="ScaleBarOverlay">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" /> <!-- 间隔 -->
+                        <ColumnDefinition Width="300" />
+                    </Grid.ColumnDefinitions>
+            
+                    <!-- 左侧 DataGrid 占用整个左侧空间 -->
+                    <DataGrid Grid.Column="0"
+                              ItemsSource="{Binding ImageTasks}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              GridLinesVisibility="All"
+                              CanUserResizeColumns="True"
+                              VerticalScrollBarVisibility="Auto"
+                              Name="ImagesDataGrid"
+                              SelectionChanged="OnDataGridSelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="图像路径"
+                                                Binding="{Binding ImagePath}"
+                                                Width="*"/>
+                            <DataGridTextColumn Header="放大倍率"
+                                                Binding="{Binding Magnification.DisplayText}"
+                                                Width="Auto"/>
+                            <DataGridTextColumn Header="输出路径"
+                                                Binding="{Binding OutputPath}"
+                                                Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+            
+                    <!-- 右侧布局 -->
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+            
+                        <!-- 右侧图片预览 -->
+                        <Border Grid.Row="0"
+                                BorderBrush="Gray"
+                                BorderThickness="1"
+                                Margin="0,0,0,10">
+                            <Image Stretch="Uniform" Source="{Binding SelectedImageSource}"/>
+                        </Border>
+            
+                        <!-- 底部按钮 -->
+                        <StackPanel Grid.Row="1" 
+                                    Orientation="Horizontal" 
+                                    HorizontalAlignment="Right" 
+                                    VerticalAlignment="Bottom" 
+                                    Margin="0,5,0,0">
+                            <Button Content="添加" Width="80" Margin="0,0,10,0" Click="OnAddClicked"/>
+                            <Button Content="运行" Width="80" Click="OnRunClicked"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Window>
