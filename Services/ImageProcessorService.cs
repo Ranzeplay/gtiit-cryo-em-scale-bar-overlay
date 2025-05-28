@@ -11,28 +11,28 @@ namespace ScaleBarOverlay.Services
     {
         public static async Task<Image> ProcessImageAsync(ImageTask task)
         {
-            // 使用任务中的边距
+            // Use margins from the task
             return await ProcessImageAsync(task, task.ScaleBarMargin, task.ScaleBarMargin);
         }
 
         public static async Task<Image> ProcessImageAsync(ImageTask task, int marginLeft, int marginBottom)
         {
-            // 读取图像
+            // Load image
             var image = await Image.LoadAsync(task.ImagePath);
 
-            // 计算比例尺长度（像素）
+            // Calculate scale bar length (pixels)
             double pixelLength = task.Magnification.PixelLength * task.Magnification.ScaleBarNanometers / 100.0;
             
-            // 比例尺参数
+            // Scale bar parameters
             var rectY1 = image.Height - marginBottom - 15;
             var rectX2 = marginLeft + (int)pixelLength;
             var rectY2 = image.Height - marginBottom;
             
-            // 绘制比例尺矩形
+            // Draw scale bar rectangle
             var rectangle = new RectangleF(marginLeft, rectY1, rectX2 - marginLeft, rectY2 - rectY1);
             image.Mutate(ctx => ctx.Fill(Color.White, rectangle));
             
-            // 比例尺文字
+            // Scale bar text
             var fontFamily = SystemFonts.Get("Arial");
             var font = fontFamily.CreateFont(72, FontStyle.Bold);
             
@@ -40,7 +40,7 @@ namespace ScaleBarOverlay.Services
             var textX = marginLeft;
             var textY = rectY1 - 90;
             
-            // 绘制文字
+            // Draw text
             var textOptions = new RichTextOptions(font)
             {
                 Origin = new PointF(textX, textY)
@@ -53,6 +53,7 @@ namespace ScaleBarOverlay.Services
 
         public static async Task SaveImageAsync(Image image, string outputPath)
         {
+            // Save image according to file extension
             string ext = Path.GetExtension(outputPath).ToLowerInvariant();
             switch (ext)
             {
@@ -73,3 +74,4 @@ namespace ScaleBarOverlay.Services
         }
     }
 }
+
