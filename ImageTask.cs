@@ -1,21 +1,13 @@
 ﻿namespace ScaleBarOverlay;
 
-public class ImageTask
+public class ImageTask(string imagePath, MagnificationOption magnification, string outputPath)
 {
-    public string ImagePath { get; set; }
-    
-    public MagnificationOption Magnification { get; set; }
-    
-    public string OutputPath { get; set; }
-    
-    public int ScaleBarMargin { get; set; } = 50;
+    public string ImagePath { get; set; } = imagePath;
 
-    public ImageTask(string imagePath, MagnificationOption magnification, string outputPath)
-    {
-        ImagePath = imagePath;
-        Magnification = magnification;
-        OutputPath = outputPath;
-        ScaleBarMargin = 50; // Default value
-    }
+    public MagnificationOption Magnification { get; } = magnification;
+
+    public string OutputPath { get; set; } = outputPath;
+
+    public int ScaleBarMargin { get; set; } = 50;
 }
 

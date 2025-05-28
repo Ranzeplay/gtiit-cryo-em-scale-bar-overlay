@@ -1,23 +1,14 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 
 namespace ScaleBarOverlay.Services
 {
-    public class ImageTaskService
+    public static class ImageTaskService
     {
-        private readonly ImageProcessorService _imageProcessorService;
-        
-        public ImageTaskService(ImageProcessorService imageProcessorService)
-        {
-            _imageProcessorService = imageProcessorService;
-        }
-        
-        public List<ImageTask> CreateImageTasks(
+        public static List<ImageTask> CreateImageTasks(
             IReadOnlyList<IStorageFile> files, 
             MagnificationOption magnificationOption, 
             IStorageFolder destinationFolder)
@@ -35,12 +26,12 @@ namespace ScaleBarOverlay.Services
             return newTasks;
         }
         
-        public async Task ProcessAllTasksAsync(ObservableCollection<ImageTask> imageTasks)
+        public static async Task ProcessAllTasksAsync(ObservableCollection<ImageTask> imageTasks)
         {
             foreach (var imageTask in imageTasks)
             {
-                var result = await _imageProcessorService.ProcessImageAsync(imageTask);
-                await _imageProcessorService.SaveImageAsync(result, imageTask.OutputPath);
+                var result = await ImageProcessorService.ProcessImageAsync(imageTask);
+                await ImageProcessorService.SaveImageAsync(result, imageTask.OutputPath);
             }
         }
     }

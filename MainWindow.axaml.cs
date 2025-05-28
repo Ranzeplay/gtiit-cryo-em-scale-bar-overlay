@@ -11,7 +11,6 @@ using MsBox.Avalonia;
 using SixLabors.ImageSharp;
 using ScaleBarOverlay.Services;
 using System.Threading;
-using Avalonia;
 using Avalonia.Media.Imaging;
 using DeadlockDetection;
 using Image = SixLabors.ImageSharp.Image;
@@ -22,14 +21,12 @@ namespace ScaleBarOverlay
     {
         private ObservableCollection<ImageTask> _imageTasks = new();
         private readonly FileDialogService _fileDialogService;
-        private readonly ImageProcessorService _imageProcessorService;
-        private readonly ImageTaskService _imageTaskService;
         private ImageTask? _selectedImageTask;
         private bool _isOriginalPreview = true;
         private CancellationTokenSource? _previewCancellationTokenSource;
         private bool _isPreviewLoading;
-        private int _scaleBarMargin = 50;  // Newly added margin property, default is 50
-        private bool _isUpdatingPreview = false; // Added flag to prevent concurrent updates
+        private int _scaleBarMargin = 50; // Newly added margin property, default is 50
+        private bool _isUpdatingPreview; // Added flag to prevent concurrent updates
 
         public ObservableCollection<ImageTask> ImageTasks
         {
@@ -40,72 +37,65 @@ namespace ScaleBarOverlay
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
             }
         }
-        
+
         // Newly added ScaleBarMargin property
         public int ScaleBarMargin
         {
             get => _scaleBarMargin;
             set
             {
-                if (_scaleBarMargin != value)
-                {
-                    _scaleBarMargin = value;
-                    OnPropertyChanged();
-                    
-                    // When the margin changes, if there is a selected task, update its margin and refresh the preview
-                    if (_selectedImageTask != null)
-                    {
-                        _selectedImageTask.ScaleBarMargin = value;
-                        _ = UpdatePreviewImage();
-                    }
-                }
+                if (_scaleBarMargin == value) return;
+
+                _scaleBarMargin = value;
+                OnPropertyChanged();
+
+                // When the margin changes, if there is a selected task, update its margin and refresh the preview
+                if (_selectedImageTask == null) return;
+
+                _selectedImageTask.ScaleBarMargin = value;
+                _ = UpdatePreviewImage();
             }
         }
-        
+
         public ImageTask? SelectedImageTask
         {
             get => _selectedImageTask;
-            set
+            private set
             {
-                if (_selectedImageTask != value)
-                {
-                    _selectedImageTask = value;
-                    OnPropertyChanged();
-                    
-                    // When selecting a new task, update the margin controller value
-                    if (value != null)
-                    {
-                        _scaleBarMargin = value.ScaleBarMargin;
-                        OnPropertyChanged(nameof(ScaleBarMargin));
-                    }
-                }
+                if (_selectedImageTask == value) return;
+
+                _selectedImageTask = value;
+                OnPropertyChanged();
+
+                // When selecting a new task, update the margin controller value
+                if (value == null) return;
+
+                _scaleBarMargin = value.ScaleBarMargin;
+                OnPropertyChanged(nameof(ScaleBarMargin));
             }
         }
-        
+
         public bool IsOriginalPreview
         {
             get => _isOriginalPreview;
             set
             {
-                if (_isOriginalPreview != value)
-                {
-                    _isOriginalPreview = value;
-                    OnPropertyChanged();
-                    _ = UpdatePreviewImage();
-                }
+                if (_isOriginalPreview == value) return;
+
+                _isOriginalPreview = value;
+                OnPropertyChanged();
+                _ = UpdatePreviewImage();
             }
         }
-        
+
         public bool IsPreviewLoading
         {
             get => _isPreviewLoading;
             set
             {
-                if (_isPreviewLoading != value)
-                {
-                    _isPreviewLoading = value;
-                    OnPropertyChanged();
-                }
+                if (_isPreviewLoading == value) return;
+                _isPreviewLoading = value;
+                OnPropertyChanged();
             }
         }
 
@@ -113,11 +103,9 @@ namespace ScaleBarOverlay
         {
             InitializeComponent();
             DataContext = this;
-            
+
             // Initialize services
             _fileDialogService = new FileDialogService(this);
-            _imageProcessorService = new ImageProcessorService();
-            _imageTaskService = new ImageTaskService(_imageProcessorService);
         }
 
         private async void OnAddClicked(object? sender, RoutedEventArgs e)
@@ -143,14 +131,14 @@ namespace ScaleBarOverlay
                     if (destinationFolder.Count == 0) return;
 
                     // Use the service to create tasks
-                    var newTasks = _imageTaskService.CreateImageTasks(files, magnificationChoice, destinationFolder[0]);
-                    foreach (var task in newTasks)
+                    var newTasks = ImageTaskService.CreateImageTasks(files, magnificationChoice, destinationFolder[0]);
+                    Dispatcher.UIThread.InvokeAsync(() =>
                     {
-                        Dispatcher.UIThread.InvokeAsync(() =>
+                        foreach (var task in newTasks)
                         {
                             ImageTasks.Add(task);
-                        });
-                    }
+                        }
+                    });
                 }
             }
             catch (Exception ex)
@@ -164,10 +152,7 @@ namespace ScaleBarOverlay
         private async void OnRunClicked(object? sender, RoutedEventArgs e)
         {
             // Process images in the background thread to avoid blocking the UI
-            await Task.Run(async () =>
-            {
-                await _imageTaskService.ProcessAllTasksAsync(ImageTasks);
-            });
+            await Task.Run(async () => { await ImageTaskService.ProcessAllTasksAsync(ImageTasks); });
 
             await MessageBoxManager
                 .GetMessageBoxStandard("Complete", "All image processing tasks have been completed.")
@@ -183,9 +168,9 @@ namespace ScaleBarOverlay
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private Avalonia.Media.Imaging.Bitmap? _previewImageSource;
+        private Bitmap? _previewImageSource;
 
-        public Avalonia.Media.Imaging.Bitmap? PreviewImageSource
+        public Bitmap? PreviewImageSource
         {
             get => _previewImageSource;
             set
@@ -201,15 +186,14 @@ namespace ScaleBarOverlay
 
         private async void OnDataGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            if (sender is DataGrid { SelectedItem: ImageTask selectedTask })
-            {
-                SelectedImageTask = selectedTask;
-                // Update the margin to the selected task's margin value
-                ScaleBarMargin = selectedTask.ScaleBarMargin;
-                await UpdatePreviewImage();
-            }
+            if (sender is not DataGrid { SelectedItem: ImageTask selectedTask }) return;
+
+            SelectedImageTask = selectedTask;
+            // Update the margin to the selected task's margin value
+            ScaleBarMargin = selectedTask.ScaleBarMargin;
+            await UpdatePreviewImage();
         }
-        
+
         private async Task UpdatePreviewImage()
         {
             // If already updating the preview image, skip this call
@@ -223,26 +207,26 @@ namespace ScaleBarOverlay
             try
             {
                 _isUpdatingPreview = true; // Set flag indicating preview is being updated
-                
+
                 // Cancel any ongoing preview operations
                 _previewCancellationTokenSource?.Cancel();
                 _previewCancellationTokenSource?.Dispose();
                 _previewCancellationTokenSource = new CancellationTokenSource();
                 var cancellationToken = _previewCancellationTokenSource.Token;
-                
+
                 // Set loading flag
                 IsPreviewLoading = true;
-                
+
                 // Use await to handle delay instead of Task.ContinueWith
                 try
                 {
                     // Short delay to avoid frequent updates
                     await Task.Delay(150, cancellationToken);
-                    
+
                     // Check if file exists
                     if (!File.Exists(_selectedImageTask.ImagePath))
                     {
-                        await Dispatcher.UIThread.InvokeAsync(() => 
+                        await Dispatcher.UIThread.InvokeAsync(() =>
                         {
                             PreviewImageSource = null;
                             IsPreviewLoading = false;
@@ -285,7 +269,7 @@ namespace ScaleBarOverlay
                 await MessageBoxManager
                     .GetMessageBoxStandard("Error", $"Error processing preview image: {ex.Message}")
                     .ShowAsPopupAsync(this);
-                
+
                 IsPreviewLoading = false;
             }
             finally
@@ -293,7 +277,7 @@ namespace ScaleBarOverlay
                 _isUpdatingPreview = false; // Reset flag regardless of success or failure
             }
         }
-        
+
         private async Task LoadOriginalImageSafe(string imagePath, CancellationToken cancellationToken)
         {
             // Perform file operations on a true background thread
@@ -302,18 +286,18 @@ namespace ScaleBarOverlay
                 await using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
                 using var memoryStream = new MemoryStream();
                 await fileStream.CopyToAsync(memoryStream, cancellationToken);
-                
+
                 if (cancellationToken.IsCancellationRequested)
                     return;
-                    
+
                 memoryStream.Position = 0;
-                
+
                 // Create bitmap and update UI on the UI thread
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     try
                     {
-                        var bitmap = new Bitmap(memoryStream).CreateScaledBitmap(new PixelSize(256, 256));
+                        var bitmap = Bitmap.DecodeToWidth(memoryStream, 512, BitmapInterpolationMode.MediumQuality);
                         PreviewImageSource = bitmap;
                     }
                     finally
@@ -323,7 +307,7 @@ namespace ScaleBarOverlay
                 });
             }, cancellationToken);
         }
-        
+
         private async Task GenerateProcessedPreviewSafe(ImageTask task, CancellationToken cancellationToken)
         {
             // Perform all processing operations on a true background thread
@@ -333,26 +317,26 @@ namespace ScaleBarOverlay
                 Image? processedImage = null;
                 try
                 {
-                    processedImage = await _imageProcessorService.ProcessImageAsync(task);
-                    
+                    processedImage = await ImageProcessorService.ProcessImageAsync(task);
+
                     if (cancellationToken.IsCancellationRequested)
                         return;
-                        
+
                     // Convert processed image to memory stream
                     using var memStream = new MemoryStream();
                     await processedImage.SaveAsPngAsync(memStream, cancellationToken);
-                    
+
                     if (cancellationToken.IsCancellationRequested)
                         return;
-                        
+
                     memStream.Position = 0;
-                    
+
                     // Create bitmap and update UI on the UI thread
                     await Dispatcher.UIThread.InvokeAsync(() =>
                     {
-                        try 
+                        try
                         {
-                            var bitmap = new Bitmap(memStream).CreateScaledBitmap(new PixelSize(256, 256));
+                            var bitmap = Bitmap.DecodeToWidth(memStream, 512, BitmapInterpolationMode.MediumQuality);
                             PreviewImageSource = bitmap;
                         }
                         finally
