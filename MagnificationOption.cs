@@ -10,6 +10,6 @@ public class MagnificationOption(int ratio, double pixels, int scaleBarNanometer
     
     public int ScaleBarNanometers { get; } = scaleBarNanometers;
 
-    public string DisplayText => $"{Ratio}x";
+    public string DisplayText => $"{Ratio}K";
 }
 
