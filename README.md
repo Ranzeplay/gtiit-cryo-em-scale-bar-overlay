@@ -1,1 +1,1 @@
-GTIIT Cryo EM Scale Bar Overlay
+# GTIIT Cryo-EM Scale Bar Overlay
