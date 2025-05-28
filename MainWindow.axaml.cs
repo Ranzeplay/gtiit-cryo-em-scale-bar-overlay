@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Avalonia.Controls;
@@ -7,14 +6,14 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Interactivity;
-using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using MsBox.Avalonia;
 using SixLabors.ImageSharp;
 using ScaleBarOverlay.Services;
-using SixLabors.ImageSharp.Formats;
-using System.Diagnostics;
 using System.Threading;
+using Avalonia;
+using Avalonia.Media.Imaging;
+using DeadlockDetection;
 using Image = SixLabors.ImageSharp.Image;
 
 namespace ScaleBarOverlay
@@ -125,20 +124,33 @@ namespace ScaleBarOverlay
         {
             try
             {
-                var files = await _fileDialogService.OpenImageFilesAsync();
-                if (files.Count == 0) return;
-
-                var magnificationSelectionDialog = new MagnificationSelectionDialog();
-                var magnificationChoice = await magnificationSelectionDialog.ShowDialog<MagnificationOption>(this);
-
-                var destinationFolder = await _fileDialogService.OpenFolderAsync();
-                if (destinationFolder.Count == 0) return;
-
-                // Use the service to create tasks
-                var newTasks = _imageTaskService.CreateImageTasks(files, magnificationChoice, destinationFolder[0]);
-                foreach (var task in newTasks)
+                using (Enable.DeadlockDetection(DeadlockDetectionMode.AlsoPotentialDeadlocks))
                 {
-                    ImageTasks.Add(task);
+                    var files = await _fileDialogService.OpenImageFilesAsync();
+                    if (files.Count == 0) return;
+
+                    var magnificationSelectionDialog = new MagnificationSelectionDialog();
+                    var magnificationChoice = await magnificationSelectionDialog.ShowDialog<MagnificationOption?>(this);
+                    if (magnificationChoice == null)
+                    {
+                        await MessageBoxManager
+                            .GetMessageBoxStandard("Error", "No magnification option selected.")
+                            .ShowAsPopupAsync(this);
+                        return;
+                    }
+
+                    var destinationFolder = await _fileDialogService.OpenFolderAsync();
+                    if (destinationFolder.Count == 0) return;
+
+                    // Use the service to create tasks
+                    var newTasks = _imageTaskService.CreateImageTasks(files, magnificationChoice, destinationFolder[0]);
+                    foreach (var task in newTasks)
+                    {
+                        Dispatcher.UIThread.InvokeAsync(() =>
+                        {
+                            ImageTasks.Add(task);
+                        });
+                    }
                 }
             }
             catch (Exception ex)
@@ -189,18 +201,13 @@ namespace ScaleBarOverlay
 
         private async void OnDataGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            if (sender is DataGrid dataGrid && dataGrid.SelectedItem is ImageTask selectedTask)
+            if (sender is DataGrid { SelectedItem: ImageTask selectedTask })
             {
                 SelectedImageTask = selectedTask;
                 // Update the margin to the selected task's margin value
                 ScaleBarMargin = selectedTask.ScaleBarMargin;
                 await UpdatePreviewImage();
             }
-        }
-        
-        private async void OnRefreshPreviewClicked(object? sender, RoutedEventArgs e)
-        {
-            await UpdatePreviewImage();
         }
         
         private async Task UpdatePreviewImage()
@@ -292,7 +299,7 @@ namespace ScaleBarOverlay
             // Perform file operations on a true background thread
             await Task.Run(async () =>
             {
-                using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
+                await using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
                 using var memoryStream = new MemoryStream();
                 await fileStream.CopyToAsync(memoryStream, cancellationToken);
                 
@@ -306,7 +313,7 @@ namespace ScaleBarOverlay
                 {
                     try
                     {
-                        var bitmap = new Avalonia.Media.Imaging.Bitmap(memoryStream);
+                        var bitmap = new Bitmap(memoryStream).CreateScaledBitmap(new PixelSize(256, 256));
                         PreviewImageSource = bitmap;
                     }
                     finally
@@ -345,7 +352,7 @@ namespace ScaleBarOverlay
                     {
                         try 
                         {
-                            var bitmap = new Avalonia.Media.Imaging.Bitmap(memStream);
+                            var bitmap = new Bitmap(memStream).CreateScaledBitmap(new PixelSize(256, 256));
                             PreviewImageSource = bitmap;
                         }
                         finally
