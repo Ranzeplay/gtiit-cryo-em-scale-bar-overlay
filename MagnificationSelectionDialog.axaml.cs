@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 namespace ScaleBarOverlay;
 
@@ -30,15 +31,21 @@ public partial class MagnificationSelectionDialog : Window
         SelectedOption = Options[0];
     }
     
-    private void OnOkClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OnOkClicked(object? sender, RoutedEventArgs e)
     {
         SelectedOption = OptionsComboBox.SelectedItem as MagnificationOption ?? throw new InvalidOperationException("No option selected.");
-        Close(SelectedOption);
+        Close((SelectedOption, true));
     }
 
-    private void OnCancelClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OnCancelClicked(object? sender, RoutedEventArgs e)
     {
         Close(null);
+    }
+
+    private void OnOkWithSameFolderClicked(object? sender, RoutedEventArgs e)
+    {
+        SelectedOption = OptionsComboBox.SelectedItem as MagnificationOption ?? throw new InvalidOperationException("No option selected.");
+        Close((SelectedOption, false));
     }
 }
 

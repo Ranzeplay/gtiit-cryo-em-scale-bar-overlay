@@ -201,7 +201,7 @@ namespace ScaleBarOverlay
                     if (files.Count == 0) return;
 
                     var magnificationSelectionDialog = new MagnificationSelectionDialog();
-                    var magnificationChoice = await magnificationSelectionDialog.ShowDialog<MagnificationOption?>(this);
+                    var magnificationChoice = await magnificationSelectionDialog.ShowDialog<(MagnificationOption, bool)?>(this);
                     if (magnificationChoice == null)
                     {
                         await MessageBoxManager
@@ -210,11 +210,21 @@ namespace ScaleBarOverlay
                         return;
                     }
 
-                    var destinationFolder = await _fileDialogService.OpenFolderAsync();
-                    if (destinationFolder.Count == 0) return;
+                    List<ImageTask> newTasks;
+                    if (magnificationChoice.Value.Item2)
+                    {
+                        var destinationFolder = await _fileDialogService.OpenFolderAsync();
+                        if (destinationFolder.Count == 0) return;
 
-                    // Use the service to create tasks
-                    var newTasks = ImageTaskService.CreateImageTasks(files, magnificationChoice, destinationFolder[0]);
+                        // Use the service to create tasks
+                        newTasks = ImageTaskService.CreateImageTasks(files, magnificationChoice.Value.Item1, destinationFolder[0]);
+                    }
+                    else
+                    {
+                        // Use the service to create tasks without a destination folder
+                        newTasks = ImageTaskService.CreateImageTasks(files, magnificationChoice.Value.Item1);
+                    }
+                    
                     Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         foreach (var task in newTasks)
