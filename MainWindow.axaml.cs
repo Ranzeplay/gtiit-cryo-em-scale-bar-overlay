@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Avalonia.Controls;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Interactivity;
@@ -11,7 +13,9 @@ using MsBox.Avalonia;
 using SixLabors.ImageSharp;
 using ScaleBarOverlay.Services;
 using System.Threading;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using DeadlockDetection;
 using Image = SixLabors.ImageSharp.Image;
 
@@ -28,6 +32,8 @@ namespace ScaleBarOverlay
         private int _scaleBarLeftMargin = 100;
         private int _scaleBarBottomMargin = 100;
         private bool _isUpdatingPreview;
+        
+        private static readonly string[] AllowedFileExtensions = { ".jpg", ".jpeg", ".png", ".bmp", ".tiff" };
 
         public ObservableCollection<ImageTask> ImageTasks
         {
@@ -119,9 +125,53 @@ namespace ScaleBarOverlay
         {
             InitializeComponent();
             DataContext = this;
-
+            
             // Initialize services
             _fileDialogService = new FileDialogService(this);
+            
+            AddHandler(DragDrop.DropEvent, Drop);
+            AddHandler(DragDrop.DragEnterEvent, Drag);
+            AddHandler(DragDrop.DragOverEvent, Drag);
+        }
+        
+        private bool IsValidFileExtension(string fileName)
+        {
+            var extension = Path.GetExtension(fileName).ToLowerInvariant();
+            return AllowedFileExtensions.Contains(extension);
+        }
+
+        private void Drag(object? sender, DragEventArgs e)
+        {
+            var items = e.Data.GetFiles();
+            if (items == null || !items.All(item => item is IStorageFile sf && IsValidFileExtension(sf.Name)))
+            {
+                // If the items are not files, we don't handle the drop
+                e.DragEffects = DragDropEffects.None;
+                e.Handled = false;
+            }
+            else
+            {
+                e.DragEffects = DragDropEffects.Copy;
+                e.Handled = true;
+            }
+        }
+
+        private async void Drop(object? sender, DragEventArgs e)
+        {
+            var items = e.Data.GetFiles();
+            if (items == null || !items.All(item => item is IStorageFile sf && IsValidFileExtension(sf.Name)))
+            {
+                // If the items are not files, we don't handle the drop
+                e.DragEffects = DragDropEffects.None;
+                e.Handled = false;
+            }
+            else
+            {
+                e.DragEffects = DragDropEffects.Copy;
+                e.Handled = true;
+
+                await AddFiles(items.OfType<IStorageFile>().ToList());
+            }
         }
 
         private async void OnAddClicked(object? sender, RoutedEventArgs e)
@@ -131,6 +181,23 @@ namespace ScaleBarOverlay
                 using (Enable.DeadlockDetection(DeadlockDetectionMode.AlsoPotentialDeadlocks))
                 {
                     var files = await _fileDialogService.OpenImageFilesAsync();
+                    await AddFiles(files);
+                }
+            }
+            catch (Exception ex)
+            {
+                await MessageBoxManager
+                    .GetMessageBoxStandard("Error", $"Error adding images: {ex.Message}")
+                    .ShowAsPopupAsync(this);
+            }
+        }
+
+        private async Task AddFiles(IReadOnlyList<IStorageFile> files)
+        {
+            try
+            {
+                using (Enable.DeadlockDetection(DeadlockDetectionMode.AlsoPotentialDeadlocks))
+                {
                     if (files.Count == 0) return;
 
                     var magnificationSelectionDialog = new MagnificationSelectionDialog();
