@@ -33,7 +33,7 @@
         </DataGrid>
 
         <!-- Right layout -->
-        <Grid Grid.Column="2" RowDefinitions="*,Auto,Auto,Auto">
+        <Grid Grid.Column="2" RowDefinitions="*,Auto,Auto,Auto,Auto">
 
             <!-- Right side image preview -->
             <Border Grid.Row="0"
@@ -63,47 +63,32 @@
             </Border>
 
             <!-- Margin control - optimized controls -->
-            <Grid Grid.Row="1" Margin="0,0,0,15" RowDefinitions="Auto,Auto,Auto">
-
-                <TextBlock Grid.Row="0"
-                           Text="Scale Bar Margin:"
-                           VerticalAlignment="Center"
+            <Grid Grid.Row="1" Margin="0,0,0,15" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                <TextBlock Grid.Row="0" 
+                           Text="Scale Bar Margins:" 
                            FontWeight="SemiBold"
-                           Margin="0,0,0,8"/>
-
-                <Slider Grid.Row="1"
-                        Minimum="10"
-                        Maximum="200"
-                        Value="{Binding ScaleBarMargin}"
-                        TickFrequency="10"
-                        TickPlacement="BottomRight"
-                        IsSnapToTickEnabled="True"
-                        Margin="0,0,0,10"
-                        IsEnabled="{Binding !!SelectedImageTask}"/>
+                           Margin="0,0,0,5"/>
 
                 <!-- Numeric input area - placed independently below slider -->
-                <Grid Grid.Row="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                <Grid Grid.Row="1" ColumnDefinitions="200,200">
 
                     <TextBlock Grid.Column="0"
-                              Text="Precise Value:"
-                              VerticalAlignment="Center"
-                              Margin="0,0,10,0"/>
+                               Text="Left:"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Stretch"
+                               Margin="0,0,10,0"/>
 
                     <NumericUpDown Grid.Column="1"
-                                  Value="{Binding ScaleBarMargin}"
+                                  Value="{Binding ScaleBarLeftMargin}"
                                   Minimum="10"
-                                  Maximum="200"
-                                  Width="120"
+                                  Maximum="4000"
+                                  Increment="100"
+                                  Width="150"
                                   HorizontalContentAlignment="Center"
                                   VerticalContentAlignment="Center"
                                   Padding="5"
                                   FontSize="14"
                                   FontWeight="SemiBold"
-                                  Foreground="Black"
                                   ButtonSpinnerLocation="Right"
                                   ShowButtonSpinner="True"
                                   AllowSpin="True"
@@ -119,10 +104,45 @@
                         </NumericUpDown.Styles>
                     </NumericUpDown>
                 </Grid>
+                
+                <Grid Grid.Row="2" ColumnDefinitions="200,200">
+
+                    <TextBlock Grid.Column="0"
+                               Text="Bottom:"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Stretch"
+                               Margin="0,0,10,0"/>
+
+                    <NumericUpDown Grid.Column="1"
+                                   Value="{Binding ScaleBarBottomMargin}"
+                                   Minimum="10"
+                                   Maximum="4000"
+                                   Increment="100"
+                                   Width="150"
+                                   HorizontalContentAlignment="Center"
+                                   VerticalContentAlignment="Center"
+                                   Padding="5"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   ButtonSpinnerLocation="Right"
+                                   ShowButtonSpinner="True"
+                                   AllowSpin="True"
+                                   ClipValueToMinMax="True"
+                                   FormatString="0"
+                                   IsEnabled="{Binding !!SelectedImageTask}">
+                        <NumericUpDown.Styles>
+                            <Style Selector="NumericUpDown /template/ TextBox">
+                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            </Style>
+                        </NumericUpDown.Styles>
+                    </NumericUpDown>
+                </Grid>
             </Grid>
 
             <!-- Preview control buttons - in the third row -->
-            <StackPanel Grid.Row="2"
+            <StackPanel Grid.Row="3"
                         Orientation="Horizontal"
                         Margin="0,0,0,10"
                         HorizontalAlignment="Left">
@@ -130,12 +150,14 @@
             </StackPanel>
 
             <!-- Bottom buttons - in the fourth row -->
-            <StackPanel Grid.Row="3"
+            <StackPanel Grid.Row="4"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"
-                        Margin="0,0,0,0">
-                <Button Content="Add" Width="80" Margin="0,0,10,0" Click="OnAddClicked" />
+                        Spacing="10"
+                        Margin="0,0,0,5">
+                <Button Content="Clear" Width="80" Click="OnClearClicked" />
+                <Button Content="Add" Width="80" Click="OnAddClicked" />
                 <Button Content="Run" Width="80" Click="OnRunClicked" />
             </StackPanel>
         </Grid>

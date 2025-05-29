@@ -7,7 +7,5 @@ public class ImageTask(string imagePath, MagnificationOption magnification, stri
     public MagnificationOption Magnification { get; } = magnification;
 
     public string OutputPath { get; set; } = outputPath;
-
-    public int ScaleBarMargin { get; set; } = 50;
 }
 

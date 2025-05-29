@@ -25,8 +25,9 @@ namespace ScaleBarOverlay
         private bool _isOriginalPreview = true;
         private CancellationTokenSource? _previewCancellationTokenSource;
         private bool _isPreviewLoading;
-        private int _scaleBarMargin = 50; // Newly added margin property, default is 50
-        private bool _isUpdatingPreview; // Added flag to prevent concurrent updates
+        private int _scaleBarLeftMargin = 100;
+        private int _scaleBarBottomMargin = 100;
+        private bool _isUpdatingPreview;
 
         public ObservableCollection<ImageTask> ImageTasks
         {
@@ -39,20 +40,36 @@ namespace ScaleBarOverlay
         }
 
         // Newly added ScaleBarMargin property
-        public int ScaleBarMargin
+        public int ScaleBarLeftMargin
         {
-            get => _scaleBarMargin;
+            get => _scaleBarLeftMargin;
             set
             {
-                if (_scaleBarMargin == value) return;
+                if (_scaleBarLeftMargin == value) return;
 
-                _scaleBarMargin = value;
+                _scaleBarLeftMargin = value;
                 OnPropertyChanged();
 
                 // When the margin changes, if there is a selected task, update its margin and refresh the preview
                 if (_selectedImageTask == null) return;
 
-                _selectedImageTask.ScaleBarMargin = value;
+                _ = UpdatePreviewImage();
+            }
+        }
+
+        public int ScaleBarBottomMargin
+        {
+            get => _scaleBarBottomMargin;
+            set
+            {
+                if (_scaleBarBottomMargin == value) return;
+
+                _scaleBarBottomMargin = value;
+                OnPropertyChanged();
+
+                // When the margin changes, if there is a selected task, update its margin and refresh the preview
+                if (_selectedImageTask == null) return;
+
                 _ = UpdatePreviewImage();
             }
         }
@@ -70,8 +87,7 @@ namespace ScaleBarOverlay
                 // When selecting a new task, update the margin controller value
                 if (value == null) return;
 
-                _scaleBarMargin = value.ScaleBarMargin;
-                OnPropertyChanged(nameof(ScaleBarMargin));
+                OnPropertyChanged(nameof(ScaleBarLeftMargin));
             }
         }
 
@@ -138,7 +154,9 @@ namespace ScaleBarOverlay
                         {
                             ImageTasks.Add(task);
                         }
-                    });
+                    }).Wait();
+                    
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
                 }
             }
             catch (Exception ex)
@@ -152,7 +170,10 @@ namespace ScaleBarOverlay
         private async void OnRunClicked(object? sender, RoutedEventArgs e)
         {
             // Process images in the background thread to avoid blocking the UI
-            await Task.Run(async () => { await ImageTaskService.ProcessAllTasksAsync(ImageTasks); });
+            await Task.Run(async () =>
+            {
+                await ImageTaskService.ProcessAllTasksAsync(ImageTasks, _scaleBarLeftMargin, _scaleBarBottomMargin);
+            });
 
             await MessageBoxManager
                 .GetMessageBoxStandard("Complete", "All image processing tasks have been completed.")
@@ -190,7 +211,6 @@ namespace ScaleBarOverlay
 
             SelectedImageTask = selectedTask;
             // Update the margin to the selected task's margin value
-            ScaleBarMargin = selectedTask.ScaleBarMargin;
             await UpdatePreviewImage();
         }
 
@@ -317,7 +337,8 @@ namespace ScaleBarOverlay
                 Image? processedImage = null;
                 try
                 {
-                    processedImage = await ImageProcessorService.ProcessImageAsync(task);
+                    processedImage =
+                        await ImageProcessorService.ProcessImageAsync(task, _scaleBarLeftMargin, _scaleBarBottomMargin);
 
                     if (cancellationToken.IsCancellationRequested)
                         return;
@@ -351,6 +372,11 @@ namespace ScaleBarOverlay
                     processedImage?.Dispose();
                 }
             }, cancellationToken);
+        }
+
+        private void OnClearClicked(object? sender, RoutedEventArgs e)
+        {
+            _imageTasks.Clear();
         }
     }
 }
