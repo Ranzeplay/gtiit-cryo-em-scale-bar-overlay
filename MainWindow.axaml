@@ -158,9 +158,10 @@
                         VerticalAlignment="Bottom"
                         Spacing="10"
                         Margin="0,0,0,5">
-                <Button Content="Clear" Width="80" Click="OnClearClicked" />
-                <Button Content="Add" Width="80" Click="OnAddClicked" />
-                <Button Content="Run" Width="80" Click="OnRunClicked" />
+                <Button Content="Clear" Click="OnClearClicked" />
+                <Button Content="Reset output folder" Click="OnResetOutputDirectoryClicked" />
+                <Button Content="Add" Click="OnAddClicked" />
+                <Button Content="Process" Click="OnProcessClicked" />
             </StackPanel>
         </Grid>
     </Grid>

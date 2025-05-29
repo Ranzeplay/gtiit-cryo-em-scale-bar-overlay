@@ -244,7 +244,7 @@ namespace ScaleBarOverlay
             }
         }
 
-        private async void OnRunClicked(object? sender, RoutedEventArgs e)
+        private async void OnProcessClicked(object? sender, RoutedEventArgs e)
         {
             // Process images in the background thread to avoid blocking the UI
             await Task.Run(async () =>
@@ -454,6 +454,30 @@ namespace ScaleBarOverlay
         private void OnClearClicked(object? sender, RoutedEventArgs e)
         {
             _imageTasks.Clear();
+        }
+
+        private async void OnResetOutputDirectoryClicked(object? sender, RoutedEventArgs e)
+        {
+            var destinationFolders = await _fileDialogService.OpenFolderAsync();
+            if (destinationFolders.Count == 0) return;
+            var destinationFolder = destinationFolders[0];
+
+            var tasks = ImageTasks.Select(task =>
+            {
+                var fileName = Path.GetFileName(task.ImagePath);
+
+                var outputName = $"{Path.GetFileNameWithoutExtension(fileName)}_scaleBar{Path.GetExtension(fileName)}";
+                var outputPath = Path.Combine(destinationFolder.Path.AbsolutePath, outputName);
+
+                task.OutputPath = outputPath;
+
+                return task;
+            });
+            
+            // Reset the output directory for all tasks
+            ImageTasks = new ObservableCollection<ImageTask>(tasks);
+            
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
         }
     }
 }
