@@ -256,6 +256,17 @@ namespace ScaleBarOverlay
                 .GetMessageBoxStandard("Complete", "All image processing tasks have been completed.")
                 .ShowAsPopupAsync(this);
 
+            var outputDirectories = ImageTasks.Select(task => Path.GetDirectoryName(task.OutputPath)).Distinct().ToList();
+            if (outputDirectories.Count == 1)
+            {
+                // Open directory
+                var outputDirectory = outputDirectories[0];
+                if (outputDirectory != null)
+                {
+                    await Launcher.LaunchUriAsync(new Uri(outputDirectory));
+                }
+            }
+
             _imageTasks.Clear();
         }
 
