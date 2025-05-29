@@ -8,15 +8,15 @@ public partial class MagnificationSelectionDialog : Window
 {
     public List<MagnificationOption> Options { get; } =
     [
-        new(11, 13.3, 500),
-        new(45, 3.1, 100),
-        new(57, 2.5, 100),
-        new(73, 1.9, 100),
-        new(92, 1.5, 100),
-        new(120, 1.2, 100),
-        new(150, 0.95, 50),
-        new(190, 0.74, 50),
-        new(240, 0.58, 50)
+        new(11, 13.3f, 500),
+        new(45, 3.1f, 100),
+        new(57, 2.5f, 100),
+        new(73, 1.9f, 100),
+        new(92, 1.5f, 100),
+        new(120, 1.2f, 100),
+        new(150, 0.95f, 50),
+        new(190, 0.74f, 50),
+        new(240, 0.58f, 50)
     ];
     
     public MagnificationOption SelectedOption { get; set; }

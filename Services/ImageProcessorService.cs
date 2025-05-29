@@ -1,44 +1,61 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.Fonts;
+using SixLabors.ImageSharp.Formats;
 
 namespace ScaleBarOverlay.Services
 {
     public static class ImageProcessorService
     {
-        public static async Task<Image> ProcessImageAsync(ImageTask task, int marginLeft, int marginBottom)
+        public static async Task<Image> ProcessImageAsync(ImageTask task, int marginLeft, int marginBottom, int? targetSize = null)
         {
             // Load image
-            var image = await Image.LoadAsync(task.ImagePath);
+            await using var stream = new FileStream(task.ImagePath, FileMode.Open, FileAccess.Read);
+            await using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            memoryStream.Seek(0, SeekOrigin.Begin);
 
-            // Calculate scale bar length (pixels)
-            double pixelLength = task.Magnification.PixelLength * task.Magnification.ScaleBarNanometers / 100.0;
+            Image image;
+            if (targetSize.HasValue)
+            {
+                var decoderOptions = new DecoderOptions
+                {
+                    TargetSize = new Size(targetSize.Value)
+                };
+                image = await Image.LoadAsync(decoderOptions, memoryStream);
+            }
+            else
+            {
+                image = await Image.LoadAsync(memoryStream);
+            }
+            float scale = image.Width / 4096f;
 
-            // Scale bar parameters
-            var rectY1 = image.Height - marginBottom - 15;
-            var rectX2 = marginLeft + (int)pixelLength;
-            var rectY2 = image.Height - marginBottom;
+            // Bar related
+            float pixelLength = task.Magnification.PixelLength * task.Magnification.ScaleBarNanometers / 100f * scale;
+            float barHeight = 15f * scale;
+            float rectY1 = image.Height - marginBottom * scale - barHeight;
+            var rectangle = new RectangleF(marginLeft * scale, rectY1, pixelLength, barHeight);
+            
+            // Text related
+            float fontSize = 72f * scale;
+            float textOffsetY = 90f * scale;
 
-            // Draw scale bar rectangle
-            var rectangle = new RectangleF(marginLeft, rectY1, rectX2 - marginLeft, rectY2 - rectY1);
-
-            // Scale bar text
             var fontFamily = SystemFonts.Get("Arial");
-            var font = fontFamily.CreateFont(72, FontStyle.Regular);
+            var font = fontFamily.CreateFont(fontSize, FontStyle.Regular);
 
             var text = $"{task.Magnification.ScaleBarNanometers} nm";
-            var textX = marginLeft;
-            var textY = rectY1 - 90;
-
-            // Draw text
+            var textX = marginLeft * scale;
+            var textY = rectY1 - textOffsetY;
+            
             var textOptions = new RichTextOptions(font)
             {
                 Origin = new PointF(textX, textY)
             };
-            
+
             image.Mutate(ctx =>
             {
                 ctx.DrawText(textOptions, text, new SolidBrush(Color.White));

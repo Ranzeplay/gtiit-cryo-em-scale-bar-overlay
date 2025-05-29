@@ -310,7 +310,7 @@ namespace ScaleBarOverlay
                 if (cancellationToken.IsCancellationRequested)
                     return;
 
-                memoryStream.Position = 0;
+                memoryStream.Seek(0, SeekOrigin.Begin);
 
                 // Create bitmap and update UI on the UI thread
                 await Dispatcher.UIThread.InvokeAsync(() =>
@@ -338,7 +338,7 @@ namespace ScaleBarOverlay
                 try
                 {
                     processedImage =
-                        await ImageProcessorService.ProcessImageAsync(task, _scaleBarLeftMargin, _scaleBarBottomMargin);
+                        await ImageProcessorService.ProcessImageAsync(task, _scaleBarLeftMargin, _scaleBarBottomMargin, 512);
 
                     if (cancellationToken.IsCancellationRequested)
                         return;

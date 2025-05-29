@@ -1,12 +1,12 @@
 ﻿namespace ScaleBarOverlay;
 
-public class MagnificationOption(int ratio, double pixels, int scaleBarNanometers)
+public class MagnificationOption(int ratio, float pixels, int scaleBarNanometers)
 {
     public int Ratio { get; } = ratio;
 
-    public double Pixels { get; } = pixels;
+    public float Pixels { get; } = pixels;
 
-    public double PixelLength => 100.0 / (0.1 * Pixels);
+    public float PixelLength => 100f / (0.1f * Pixels);
     
     public int ScaleBarNanometers { get; } = scaleBarNanometers;
 
