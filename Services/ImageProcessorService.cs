@@ -1,4 +1,5 @@
 using System.IO;
+using System.Numerics;
 using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
@@ -52,9 +53,14 @@ namespace ScaleBarOverlay.Services
             
             var textOptions = new RichTextOptions(font)
             {
-                Origin = new PointF(textX, textY)
+                Origin = new Vector2(textX, textY)
             };
-
+            
+            var textMeasure = TextMeasurer.MeasureSize(text, textOptions);
+            var beginX = textX + (pixelLength - textMeasure.Width) / 2;
+            
+            textOptions.Origin = new Vector2(beginX, textY);
+            
             image.Mutate(ctx =>
             {
                 ctx.DrawText(textOptions, text, new SolidBrush(Color.White));
