@@ -20,7 +20,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
       
       - name: Restore dependencies
         run: dotnet restore
@@ -32,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ScaleBarOverlay-linux-x64
-          path: bin/Release/net8.0/linux-x64/publish/
+          path: bin/Release/net9.0/linux-x64/publish/
           retention-days: 90
 
   build-windows:
@@ -48,7 +48,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
       
       - name: Restore dependencies
         run: dotnet restore
@@ -60,5 +60,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ScaleBarOverlay-win-x64
-          path: bin/Release/net8.0/win-x64/publish/
+          path: bin/Release/net9.0/win-x64/publish/
           retention-days: 90
