@@ -158,7 +158,7 @@ namespace ScaleBarOverlay
 
         private async void Drop(object? sender, DragEventArgs e)
         {
-            var items = e.Data.GetFiles();
+            var items = e.Data.GetFiles()?.ToList();
             if (items == null || !items.All(item => item is IStorageFile sf && IsValidFileExtension(sf.Name)))
             {
                 // If the items are not files, we don't handle the drop
@@ -188,7 +188,7 @@ namespace ScaleBarOverlay
             {
                 await MessageBoxManager
                     .GetMessageBoxStandard("Error", $"Error adding images: {ex.Message}")
-                    .ShowAsPopupAsync(this);
+                    .ShowWindowDialogAsync(this);
             }
         }
 
@@ -200,31 +200,29 @@ namespace ScaleBarOverlay
                 {
                     if (files.Count == 0) return;
 
-                    var magnificationSelectionDialog = new MagnificationSelectionDialog();
-                    var magnificationChoice = await magnificationSelectionDialog.ShowDialog<(MagnificationOption, bool)?>(this);
-                    if (magnificationChoice == null)
+                    var magnificationSelectionDialog = new ImportOptionsDialog();
+                    var importConfig = await magnificationSelectionDialog.ShowDialog<ImportConfig?>(this);
+                    if (importConfig == null)
                     {
                         await MessageBoxManager
                             .GetMessageBoxStandard("Error", "No magnification option selected.")
-                            .ShowAsPopupAsync(this);
+                            .ShowWindowDialogAsync(this);
                         return;
                     }
 
                     List<ImageTask> newTasks;
-                    if (magnificationChoice.Value.Item2)
+                    if (string.IsNullOrWhiteSpace(importConfig.DestinationDirectory))
                     {
-                        var destinationFolder = await _fileDialogService.OpenFolderAsync();
-                        if (destinationFolder.Count == 0) return;
-
-                        // Use the service to create tasks
-                        newTasks = ImageTaskService.CreateImageTasks(files, magnificationChoice.Value.Item1, destinationFolder[0]);
+                        // Use the service to create tasks without a destination folder
+                        newTasks = ImageTaskService.CreateImageTasks(files, importConfig.MagnificationOption);
                     }
                     else
                     {
-                        // Use the service to create tasks without a destination folder
-                        newTasks = ImageTaskService.CreateImageTasks(files, magnificationChoice.Value.Item1);
+                        // Use the service to create tasks
+                        newTasks = ImageTaskService.CreateImageTasks(files, importConfig.MagnificationOption,
+                            importConfig.DestinationDirectory);
                     }
-                    
+
                     Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         foreach (var task in newTasks)
@@ -254,7 +252,7 @@ namespace ScaleBarOverlay
 
             await MessageBoxManager
                 .GetMessageBoxStandard("Complete", "All image processing tasks have been completed.")
-                .ShowAsPopupAsync(this);
+                .ShowWindowAsync();
 
             var outputDirectories = ImageTasks.Select(task => Path.GetDirectoryName(task.OutputPath)).Distinct().ToList();
             if (outputDirectories.Count == 1)
@@ -367,7 +365,7 @@ namespace ScaleBarOverlay
                             IsPreviewLoading = false;
                             await MessageBoxManager
                                 .GetMessageBoxStandard("Error", $"Failed to load image preview: {ex.Message}")
-                                .ShowAsPopupAsync(this);
+                                .ShowWindowDialogAsync(this);
                         });
                     }
                 }
@@ -376,7 +374,7 @@ namespace ScaleBarOverlay
             {
                 await MessageBoxManager
                     .GetMessageBoxStandard("Error", $"Error processing preview image: {ex.Message}")
-                    .ShowAsPopupAsync(this);
+                    .ShowWindowDialogAsync(this);
 
                 IsPreviewLoading = false;
             }
@@ -477,7 +475,7 @@ namespace ScaleBarOverlay
             {
                 var fileName = Path.GetFileName(task.ImagePath);
 
-                var outputName = $"{Path.GetFileNameWithoutExtension(fileName)}_scaleBar{Path.GetExtension(fileName)}";
+                var outputName = $"{Path.GetFileNameWithoutExtension(fileName)}_ScaleBar{Path.GetExtension(fileName)}";
                 var outputPath = Path.Combine(destinationFolder.Path.AbsolutePath, outputName);
 
                 task.OutputPath = outputPath;

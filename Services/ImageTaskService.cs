@@ -11,14 +11,14 @@ namespace ScaleBarOverlay.Services
         public static List<ImageTask> CreateImageTasks(
             IReadOnlyList<IStorageFile> files, 
             MagnificationOption magnificationOption, 
-            IStorageFolder? destinationFolder = null)
+            string? destinationFolder = null)
         {
             var newTasks = new List<ImageTask>();
             
             foreach (var file in files)
             {
                 var outputName = $"{Path.GetFileNameWithoutExtension(file.Name)}_ScaleBar{Path.GetExtension(file.Name)}";
-                var outputPath = Path.Combine(destinationFolder?.Path.AbsolutePath ?? Path.GetDirectoryName(file.Path.AbsolutePath)!, outputName);
+                var outputPath = Path.Combine(destinationFolder ?? Path.GetDirectoryName(file.Path.AbsolutePath)!, outputName);
                 var task = new ImageTask(file.Path.LocalPath, magnificationOption, outputPath);
                 newTasks.Add(task);
             }
