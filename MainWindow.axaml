@@ -20,7 +20,8 @@
                   CanUserResizeColumns="True"
                   VerticalScrollBarVisibility="Auto"
                   Name="ImagesDataGrid"
-                  SelectionChanged="OnDataGridSelectionChanged">
+                  SelectionChanged="OnDataGridSelectionChanged"
+                  DoubleTapped="InputElement_OnDoubleTapped">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Image Path"
                                     Binding="{Binding ImagePath}"

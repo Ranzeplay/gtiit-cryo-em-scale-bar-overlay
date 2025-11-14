@@ -30,5 +30,21 @@ namespace ScaleBarOverlay.Services
                 Title = title,
             });
         }
+        
+        public async Task<IStorageFile?> SaveFile(string title = "Choose Output File", string defaultFilePath = "output.png")
+        {
+            return await parentWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = title,
+                SuggestedFileName = defaultFilePath,
+                FileTypeChoices =
+                [
+                    new FilePickerFileType("Image Files")
+                    {
+                        Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp"]
+                    }
+                ]
+            });
+        }
     }
 }

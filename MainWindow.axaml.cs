@@ -488,5 +488,48 @@ namespace ScaleBarOverlay
             
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
         }
+
+        private async void InputElement_OnDoubleTapped(object? sender, TappedEventArgs e)
+        {
+            if (sender is DataGrid dataGrid && dataGrid.SelectedItem is ImageTask selectedTask)
+            {
+                var selectedColumn = dataGrid.CurrentColumn;
+                if (selectedColumn != null)
+                {
+                    if (selectedColumn.Header.ToString() == "Output Path")
+                    {
+                        // Open file save dialog
+                        await Dispatcher.UIThread.InvokeAsync(async () =>
+                        {
+                            var saveFile = await _fileDialogService.SaveFile(
+                                "Choose Output File",
+                                Path.GetFileName(selectedTask.OutputPath));
+
+                            if (saveFile != null)
+                            {
+                                selectedTask.OutputPath = saveFile.Path.LocalPath;
+                            }
+                        });
+                    }
+                    else if (selectedColumn.Header.ToString() == "Image Path")
+                    {
+                        // Open image
+                        await Dispatcher.UIThread.InvokeAsync(async () =>
+                        {
+                            if (File.Exists(selectedTask.ImagePath))
+                            {
+                                await Launcher.LaunchUriAsync(new Uri(selectedTask.ImagePath));
+                            }
+                            else
+                            {
+                                await MessageBoxManager
+                                    .GetMessageBoxStandard("Error", "Image file does not exist.")
+                                    .ShowWindowDialogAsync(this);
+                            }
+                        });
+                    }
+                }
+            }
+        }
     }
 }
