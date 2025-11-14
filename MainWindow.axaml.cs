@@ -201,8 +201,8 @@ namespace ScaleBarOverlay
                 {
                     if (files.Count == 0) return;
 
-                    var magnificationSelectionDialog = new ImportOptionsDialog();
-                    var importConfig = await magnificationSelectionDialog.ShowDialog<ImportConfig?>(this);
+                    var importOptionsDialog = new ImportOptionsDialog();
+                    var importConfig = await importOptionsDialog.ShowDialog<ImportConfig?>(this);
                     if (importConfig == null)
                     {
                         await MessageBoxManager
@@ -531,6 +531,17 @@ namespace ScaleBarOverlay
                                     .ShowWindowDialogAsync(this);
                             }
                         });
+                    }
+                    else
+                    {
+                        var importOptionsDialog = new ImportOptionsDialog();
+                        var importConfig = await importOptionsDialog.ShowDialog<ImportConfig?>(this);
+                        if (importConfig == null) return;
+                        
+                        selectedTask.Magnification = importConfig.MagnificationOption;
+                        selectedTask.AlignmentOption = importConfig.Alignment;
+
+                        dataGrid.SelectedItem = null;
                     }
                 }
             }

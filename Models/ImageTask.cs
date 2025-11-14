@@ -7,10 +7,23 @@ namespace ScaleBarOverlay.Models;
 public class ImageTask(string imagePath, MagnificationOption magnification, string outputPath, AlignmentOption alignmentOption) : INotifyPropertyChanged
 {
     private string _outputPath = outputPath;
+    private MagnificationOption _magnification = magnification;
+    private AlignmentOption _alignmentOption = alignmentOption;
     public string ImagePath { get; set; } = imagePath;
+    
+    public string ImageName => System.IO.Path.GetFileName(ImagePath);
 
-    public MagnificationOption Magnification { get; } = magnification;
-    public AlignmentOption AlignmentOption { get; set; } = alignmentOption;
+    public MagnificationOption Magnification
+    {
+        get => _magnification;
+        set => SetField(ref _magnification, value);
+    }
+
+    public AlignmentOption AlignmentOption
+    {
+        get => _alignmentOption;
+        set => SetField(ref _alignmentOption, value);
+    }
 
     public string OutputPath
     {

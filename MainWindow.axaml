@@ -24,10 +24,13 @@
                   DoubleTapped="InputElement_OnDoubleTapped">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Image Path"
-                                    Binding="{Binding ImagePath}"
+                                    Binding="{Binding ImageName}"
                                     Width="*" />
                 <DataGridTextColumn Header="Magnification"
                                     Binding="{Binding Magnification.DisplayText}"
+                                    Width="Auto" />
+                <DataGridTextColumn Header="Scale text alignment"
+                                    Binding="{Binding AlignmentOption}"
                                     Width="Auto" />
                 <DataGridTextColumn Header="Output Path"
                                     Binding="{Binding OutputPath}"
