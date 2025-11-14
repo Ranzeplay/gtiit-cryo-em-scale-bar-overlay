@@ -19,7 +19,7 @@ namespace ScaleBarOverlay.Services
             {
                 var outputName = $"{Path.GetFileNameWithoutExtension(file.Name)}_ScaleBar{Path.GetExtension(file.Name)}";
                 var outputPath = Path.Combine(destinationFolder?.Path.AbsolutePath ?? Path.GetDirectoryName(file.Path.AbsolutePath)!, outputName);
-                var task = new ImageTask(file.Path.AbsolutePath, magnificationOption, outputPath);
+                var task = new ImageTask(file.Path.LocalPath, magnificationOption, outputPath);
                 newTasks.Add(task);
             }
             
