@@ -32,7 +32,7 @@ namespace ScaleBarOverlay
         private int _scaleBarLeftMargin = 100;
         private int _scaleBarBottomMargin = 100;
         private bool _isUpdatingPreview;
-        
+
         private static readonly string[] AllowedFileExtensions = { ".jpg", ".jpeg", ".png", ".bmp", ".tiff" };
 
         public ObservableCollection<ImageTask> ImageTasks
@@ -125,15 +125,15 @@ namespace ScaleBarOverlay
         {
             InitializeComponent();
             DataContext = this;
-            
+
             // Initialize services
             _fileDialogService = new FileDialogService(this);
-            
+
             AddHandler(DragDrop.DropEvent, Drop);
             AddHandler(DragDrop.DragEnterEvent, Drag);
             AddHandler(DragDrop.DragOverEvent, Drag);
         }
-        
+
         private bool IsValidFileExtension(string fileName)
         {
             var extension = Path.GetExtension(fileName).ToLowerInvariant();
@@ -214,13 +214,14 @@ namespace ScaleBarOverlay
                     if (string.IsNullOrWhiteSpace(importConfig.DestinationDirectory))
                     {
                         // Use the service to create tasks without a destination folder
-                        newTasks = ImageTaskService.CreateImageTasks(files, importConfig.MagnificationOption);
+                        newTasks = ImageTaskService.CreateImageTasks(files, importConfig.MagnificationOption,
+                            importConfig.Alignment);
                     }
                     else
                     {
                         // Use the service to create tasks
                         newTasks = ImageTaskService.CreateImageTasks(files, importConfig.MagnificationOption,
-                            importConfig.DestinationDirectory);
+                            importConfig.Alignment, importConfig.DestinationDirectory);
                     }
 
                     Dispatcher.UIThread.InvokeAsync(() =>
@@ -230,7 +231,7 @@ namespace ScaleBarOverlay
                             ImageTasks.Add(task);
                         }
                     }).Wait();
-                    
+
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
                 }
             }
@@ -254,7 +255,8 @@ namespace ScaleBarOverlay
                 .GetMessageBoxStandard("Complete", "All image processing tasks have been completed.")
                 .ShowWindowAsync();
 
-            var outputDirectories = ImageTasks.Select(task => Path.GetDirectoryName(task.OutputPath)).Distinct().ToList();
+            var outputDirectories =
+                ImageTasks.Select(task => Path.GetDirectoryName(task.OutputPath)).Distinct().ToList();
             if (outputDirectories.Count == 1)
             {
                 // Open directory
@@ -424,7 +426,8 @@ namespace ScaleBarOverlay
                 try
                 {
                     processedImage =
-                        await ImageProcessorService.ProcessImageAsync(task, _scaleBarLeftMargin, _scaleBarBottomMargin, 512);
+                        await ImageProcessorService.ProcessImageAsync(task, _scaleBarLeftMargin, _scaleBarBottomMargin,
+                            512);
 
                     if (cancellationToken.IsCancellationRequested)
                         return;
@@ -482,10 +485,10 @@ namespace ScaleBarOverlay
 
                 return task;
             });
-            
+
             // Reset the output directory for all tasks
             ImageTasks = new ObservableCollection<ImageTask>(tasks);
-            
+
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
         }
 

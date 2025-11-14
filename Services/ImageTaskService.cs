@@ -10,7 +10,8 @@ namespace ScaleBarOverlay.Services
     {
         public static List<ImageTask> CreateImageTasks(
             IReadOnlyList<IStorageFile> files, 
-            MagnificationOption magnificationOption, 
+            MagnificationOption magnificationOption,
+            ImportConfig.AlignmentOption alignmentOption,
             string? destinationFolder = null)
         {
             var newTasks = new List<ImageTask>();
@@ -19,7 +20,7 @@ namespace ScaleBarOverlay.Services
             {
                 var outputName = $"{Path.GetFileNameWithoutExtension(file.Name)}_ScaleBar{Path.GetExtension(file.Name)}";
                 var outputPath = Path.Combine(destinationFolder ?? Path.GetDirectoryName(file.Path.AbsolutePath)!, outputName);
-                var task = new ImageTask(file.Path.LocalPath, magnificationOption, outputPath);
+                var task = new ImageTask(file.Path.LocalPath, magnificationOption, outputPath, alignmentOption);
                 newTasks.Add(task);
             }
             

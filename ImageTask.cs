@@ -4,12 +4,13 @@ using System.Runtime.CompilerServices;
 
 namespace ScaleBarOverlay;
 
-public class ImageTask(string imagePath, MagnificationOption magnification, string outputPath) : INotifyPropertyChanged
+public class ImageTask(string imagePath, MagnificationOption magnification, string outputPath, ImportConfig.AlignmentOption alignmentOption) : INotifyPropertyChanged
 {
     private string _outputPath = outputPath;
     public string ImagePath { get; set; } = imagePath;
 
     public MagnificationOption Magnification { get; } = magnification;
+    public ImportConfig.AlignmentOption AlignmentOption { get; set; } = alignmentOption;
 
     public string OutputPath
     {

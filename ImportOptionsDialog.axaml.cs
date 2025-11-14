@@ -12,6 +12,20 @@ public partial class ImportOptionsDialog : Window
     public IEnumerable<MagnificationOption> Options => MagnificationOption.TemplateOptions;
     
     public MagnificationOption SelectedOption { get; set; }
+
+    public IEnumerable<AlignmentViewModel> AlignmentViewModels =>
+    [
+        new(ImportConfig.AlignmentOption.Left, "Left"),
+        new(ImportConfig.AlignmentOption.Center, "Center"),
+        new(ImportConfig.AlignmentOption.Right, "Right")
+    ];
+    
+    public class AlignmentViewModel(ImportConfig.AlignmentOption alignment, string displayName)
+    {
+        public ImportConfig.AlignmentOption AlignmentOption { get; set; } = alignment;
+        
+        public string DisplayName { get; set; } = displayName;
+    }
     
     public ImportOptionsDialog()
     {
@@ -28,7 +42,10 @@ public partial class ImportOptionsDialog : Window
         Close(new ImportConfig
         {
             MagnificationOption = SelectedOption,
-            DestinationDirectory = DestinationPathTextBox.Text
+            DestinationDirectory = DestinationPathTextBox.Text,
+            Alignment = ScaleTextAlignmentComboBox.SelectionBoxItem as AlignmentViewModel is AlignmentViewModel vm
+                ? vm.AlignmentOption
+                : ImportConfig.AlignmentOption.Left
         });
     }
 

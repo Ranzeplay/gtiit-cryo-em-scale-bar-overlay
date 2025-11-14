@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -11,7 +12,8 @@ namespace ScaleBarOverlay.Services
 {
     public static class ImageProcessorService
     {
-        public static async Task<Image> ProcessImageAsync(ImageTask task, int marginLeft, int marginBottom, int? targetSize = null)
+        public static async Task<Image> ProcessImageAsync(ImageTask task, int marginLeft, int marginBottom,
+            int? targetSize = null)
         {
             // Load image
             await using var stream = new FileStream(task.ImagePath, FileMode.Open, FileAccess.Read);
@@ -32,6 +34,7 @@ namespace ScaleBarOverlay.Services
             {
                 image = await Image.LoadAsync(memoryStream);
             }
+
             float scale = image.Width / 4096f;
 
             // Bar related
@@ -39,7 +42,7 @@ namespace ScaleBarOverlay.Services
             float barHeight = 15f * scale;
             float rectY1 = image.Height - marginBottom * scale - barHeight;
             var rectangle = new RectangleF(marginLeft * scale, rectY1, pixelLength, barHeight);
-            
+
             // Text related
             float fontSize = 72f * scale;
             float textOffsetY = 90f * scale;
@@ -50,17 +53,23 @@ namespace ScaleBarOverlay.Services
             var text = $"{task.Magnification.ScaleBarNanometers} nm";
             var textX = marginLeft * scale;
             var textY = rectY1 - textOffsetY;
-            
+
             var textOptions = new RichTextOptions(font)
             {
                 Origin = new Vector2(textX, textY)
             };
-            
+
             var textMeasure = TextMeasurer.MeasureSize(text, textOptions);
-            var beginX = textX + (pixelLength - textMeasure.Width) / 2;
-            
+            var beginX = task.AlignmentOption switch
+            {
+                ImportConfig.AlignmentOption.Left => textX,
+                ImportConfig.AlignmentOption.Center => textX + (pixelLength - textMeasure.Width) / 2,
+                ImportConfig.AlignmentOption.Right => textX + pixelLength - textMeasure.Width,
+                _ => throw new ArgumentOutOfRangeException(nameof(task.AlignmentOption))
+            };
+
             textOptions.Origin = new Vector2(beginX, textY);
-            
+
             image.Mutate(ctx =>
             {
                 ctx.DrawText(textOptions, text, new SolidBrush(Color.White));
