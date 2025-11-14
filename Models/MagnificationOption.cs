@@ -1,4 +1,4 @@
-﻿namespace ScaleBarOverlay;
+﻿namespace ScaleBarOverlay.Models;
 
 public class MagnificationOption(int ratio, float pixels, int scaleBarNanometers)
 {

@@ -17,6 +17,7 @@ using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using DeadlockDetection;
+using ScaleBarOverlay.Models;
 using Image = SixLabors.ImageSharp.Image;
 
 namespace ScaleBarOverlay

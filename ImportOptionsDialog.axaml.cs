@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using ScaleBarOverlay.Models;
 using ScaleBarOverlay.Services;
 
 namespace ScaleBarOverlay;
@@ -15,14 +16,14 @@ public partial class ImportOptionsDialog : Window
 
     public IEnumerable<AlignmentViewModel> AlignmentViewModels =>
     [
-        new(ImportConfig.AlignmentOption.Left, "Left"),
-        new(ImportConfig.AlignmentOption.Center, "Center"),
-        new(ImportConfig.AlignmentOption.Right, "Right")
+        new(AlignmentOption.Left, "Left"),
+        new(AlignmentOption.Center, "Center"),
+        new(AlignmentOption.Right, "Right")
     ];
     
-    public class AlignmentViewModel(ImportConfig.AlignmentOption alignment, string displayName)
+    public class AlignmentViewModel(AlignmentOption alignment, string displayName)
     {
-        public ImportConfig.AlignmentOption AlignmentOption { get; set; } = alignment;
+        public AlignmentOption AlignmentOption { get; set; } = alignment;
         
         public string DisplayName { get; set; } = displayName;
     }
@@ -43,9 +44,9 @@ public partial class ImportOptionsDialog : Window
         {
             MagnificationOption = SelectedOption,
             DestinationDirectory = DestinationPathTextBox.Text,
-            Alignment = ScaleTextAlignmentComboBox.SelectionBoxItem as AlignmentViewModel is AlignmentViewModel vm
+            Alignment = ScaleTextAlignmentComboBox.SelectionBoxItem as AlignmentViewModel is { } vm
                 ? vm.AlignmentOption
-                : ImportConfig.AlignmentOption.Left
+                : AlignmentOption.Left
         });
     }
 

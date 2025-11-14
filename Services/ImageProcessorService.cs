@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Numerics;
 using System.Threading.Tasks;
+using ScaleBarOverlay.Models;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;
@@ -62,9 +63,9 @@ namespace ScaleBarOverlay.Services
             var textMeasure = TextMeasurer.MeasureSize(text, textOptions);
             var beginX = task.AlignmentOption switch
             {
-                ImportConfig.AlignmentOption.Left => textX,
-                ImportConfig.AlignmentOption.Center => textX + (pixelLength - textMeasure.Width) / 2,
-                ImportConfig.AlignmentOption.Right => textX + pixelLength - textMeasure.Width,
+                AlignmentOption.Left => textX,
+                AlignmentOption.Center => textX + (pixelLength - textMeasure.Width) / 2,
+                AlignmentOption.Right => textX + pixelLength - textMeasure.Width,
                 _ => throw new ArgumentOutOfRangeException(nameof(task.AlignmentOption))
             };
 

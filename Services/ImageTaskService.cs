@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
+using ScaleBarOverlay.Models;
 
 namespace ScaleBarOverlay.Services
 {
@@ -11,7 +12,7 @@ namespace ScaleBarOverlay.Services
         public static List<ImageTask> CreateImageTasks(
             IReadOnlyList<IStorageFile> files, 
             MagnificationOption magnificationOption,
-            ImportConfig.AlignmentOption alignmentOption,
+            AlignmentOption alignmentOption,
             string? destinationFolder = null)
         {
             var newTasks = new List<ImageTask>();
