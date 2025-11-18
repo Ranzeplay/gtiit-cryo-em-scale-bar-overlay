@@ -249,6 +249,11 @@ namespace ScaleBarOverlay
             // Process images in the background thread to avoid blocking the UI
             await Task.Run(async () =>
             {
+                var config = ConfigService.LoadConfig();
+                config.ScaleBarBottomMargin = ScaleBarBottomMargin;
+                config.ScaleBarLeftMargin = ScaleBarLeftMargin;
+                ConfigService.SaveConfig(config);
+                
                 await ImageTaskService.ProcessAllTasksAsync(ImageTasks, _scaleBarLeftMargin, _scaleBarBottomMargin);
             });
 
@@ -271,7 +276,7 @@ namespace ScaleBarOverlay
             _imageTasks.Clear();
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
+        public new event PropertyChangedEventHandler? PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
