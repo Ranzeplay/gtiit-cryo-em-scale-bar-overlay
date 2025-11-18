@@ -27,7 +27,7 @@ namespace ScaleBarOverlay
         private ObservableCollection<ImageTask> _imageTasks = new();
         private readonly FileDialogService _fileDialogService;
         private ImageTask? _selectedImageTask;
-        private bool _isOriginalPreview = true;
+        private bool _isOriginalPreview = false;
         private CancellationTokenSource? _previewCancellationTokenSource;
         private bool _isPreviewLoading;
         private int _scaleBarLeftMargin = 100;
@@ -541,7 +541,7 @@ namespace ScaleBarOverlay
                         selectedTask.Magnification = importConfig.MagnificationOption;
                         selectedTask.AlignmentOption = importConfig.Alignment;
 
-                        dataGrid.SelectedItem = null;
+                        await UpdatePreviewImage();
                     }
                 }
             }
