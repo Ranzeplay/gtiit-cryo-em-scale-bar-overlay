@@ -50,7 +50,7 @@ public partial class ImportOptionsDialog : Window
         var state = new ImportConfig
         {
             MagnificationOption = SelectedOption,
-            DestinationDirectory = DestinationPathTextBox.Text,
+            DestinationDirectory = DestinationPathTextBox.Text ?? "",
             Alignment = ScaleTextAlignmentComboBox.SelectionBoxItem as AlignmentViewModel is { } vm
                 ? vm.AlignmentOption
                 : AlignmentOption.Left
