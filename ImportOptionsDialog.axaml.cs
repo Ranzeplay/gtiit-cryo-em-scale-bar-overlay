@@ -28,12 +28,12 @@ public partial class ImportOptionsDialog : Window
         public string DisplayName { get; set; } = displayName;
     }
     
-    public ImportOptionsDialog()
+    public ImportOptionsDialog(ImportConfig? config = null)
     {
         InitializeComponent();
         DataContext = this;
         
-        var initialConfig = ConfigService.LoadConfig().ImportConfig;
+        var initialConfig = config ?? ConfigService.LoadConfig().ImportConfig;
         DestinationPathTextBox.Text = initialConfig.DestinationDirectory;
         
         OptionsComboBox.ItemsSource = Options;

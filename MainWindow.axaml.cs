@@ -539,7 +539,12 @@ namespace ScaleBarOverlay
                     }
                     else
                     {
-                        var importOptionsDialog = new ImportOptionsDialog();
+                        var importOptionsDialog = new ImportOptionsDialog(new ImportConfig
+                        {
+                            MagnificationOption = selectedTask.Magnification,
+                            Alignment = selectedTask.AlignmentOption,
+                            DestinationDirectory = Path.GetDirectoryName(selectedTask.OutputPath) ?? ""
+                        });
                         var importConfig = await importOptionsDialog.ShowDialog<ImportConfig?>(this);
                         if (importConfig == null) return;
                         
