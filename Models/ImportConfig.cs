@@ -14,6 +14,7 @@ public class ImportConfig
 
     public int MagnificationRatio { get; set; }
 
+    [JsonIgnore]
     public string DestinationDirectory { get; set; } = string.Empty;
 
     public AlignmentOption Alignment { get; set; }
