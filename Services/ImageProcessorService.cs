@@ -45,8 +45,8 @@ namespace ScaleBarOverlay.Services
             var rectangle = new RectangleF(marginLeft * scale, rectY1, pixelLength, barHeight);
 
             // Text related
-            float fontSize = 72f * scale;
-            float textOffsetY = 90f * scale;
+            float fontSize = 96f * scale;
+            float textOffsetY = 106f * scale;
 
             var fontFamily = SystemFonts.Get("Arial");
             var font = fontFamily.CreateFont(fontSize, FontStyle.Regular);
