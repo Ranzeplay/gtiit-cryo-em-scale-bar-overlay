@@ -46,12 +46,11 @@ namespace ScaleBarOverlay.Services
 
         public static async Task ProcessAllTasksAsync(
             ObservableCollection<ImageTask> imageTasks,
-            int marginLeft,
-            int marginBottom)
+            ScaleBarLocation location)
         {
             foreach (var imageTask in imageTasks)
             {
-                var result = await ImageProcessorService.ProcessImageAsync(imageTask, marginLeft, marginBottom);
+                var result = await ImageProcessorService.ProcessImageAsync(imageTask, location);
                 await ImageProcessorService.SaveImageAsync(result, imageTask.OutputPath);
             }
         }

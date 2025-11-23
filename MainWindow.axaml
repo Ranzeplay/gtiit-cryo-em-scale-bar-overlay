@@ -8,7 +8,7 @@
         x:Class="ScaleBarOverlay.MainWindow"
         DragDrop.AllowDrop="True"
         Title="ScaleBarOverlay">
-    
+
     <Grid Margin="10" ColumnDefinitions="*,10,500">
 
         <!-- DataGrid takes the entire left space -->
@@ -39,13 +39,23 @@
         </DataGrid>
 
         <!-- Right layout -->
-        <Grid Grid.Column="2" RowDefinitions="*,Auto,Auto,Auto,Auto">
-
-            <!-- Right side image preview -->
-            <Border Grid.Row="0"
+        <StackPanel Grid.Column="2" Orientation="Vertical" Margin="20,0,0,0" Spacing="20">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Spacing="10"
+                        Margin="0,0,0,5">
+                <Button Content="Clear" Click="OnClearClicked" />
+                <Button Content="Reset output folder" Click="OnResetOutputDirectoryClicked" />
+                <Button Content="Add" Click="OnAddClicked" />
+                <Button Content="Process" Click="OnProcessClicked" />
+            </StackPanel>
+            
+            <Border x:Name="PreviewBorder"
                     BorderBrush="Gray"
                     BorderThickness="1"
-                    Margin="0,0,0,10">
+                    Margin="0,0,0,0"
+                    Height="{Binding Bounds.Width, ElementName=PreviewBorder}">
                 <Grid>
                     <Image Stretch="Uniform" Source="{Binding PreviewImageSource}" />
                     <!-- Loading indicator -->
@@ -53,74 +63,54 @@
                             Background="#80000000"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch">
-                        <ProgressBar IsIndeterminate="True" 
-                                    Width="100" 
-                                    Height="10" 
-                                    HorizontalAlignment="Center" 
-                                    VerticalAlignment="Center" />
+                        <ProgressBar IsIndeterminate="True"
+                                     Width="100"
+                                     Height="10"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center" />
                     </Border>
                     <!-- No image hint -->
                     <TextBlock IsVisible="{Binding PreviewImageSource, Converter={x:Static ObjectConverters.IsNull}}"
-                              Text="Select an image to view preview" 
-                              HorizontalAlignment="Center" 
-                              VerticalAlignment="Center" 
-                              Opacity="0.5" />
+                               Text="Select an image to view preview"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Opacity="0.5" />
                 </Grid>
             </Border>
-
-            <!-- Margin control - optimized controls -->
-            <Grid Grid.Row="1" Margin="0,0,0,15" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                <TextBlock Grid.Row="0" 
-                           Text="Scale Bar Margins:" 
+            
+            <StackPanel Margin="0,0,0,0" Spacing="10">
+                <TextBlock Grid.Row="0"
+                           Text="Scale Bar Margins:"
                            FontWeight="SemiBold"
-                           Margin="0,0,0,5"/>
+                           Margin="0,0,0,5" />
+
+                <Grid ColumnDefinitions="200,200">
+                    <TextBlock Text="Scale bar edge:" Margin="0,0,0,4" Grid.Column="0" />
+                    <ComboBox Grid.Column="1"
+                              x:Name="ScaleBarEdgeLocation"
+                              ItemsSource="{Binding EdgeOptions}"
+                              SelectedItem="{Binding SelectedEdge}"
+                              SelectedIndex="2"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="ScaleBarEdgeLocation_OnSelectionChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayName}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
 
                 <!-- Numeric input area - placed independently below slider -->
-                <Grid Grid.Row="1" ColumnDefinitions="200,200">
-
+                <Grid ColumnDefinitions="200,200">
                     <TextBlock Grid.Column="0"
-                               Text="Left:"
+                               Text="Horizontal offset:"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Stretch"
-                               Margin="0,0,10,0"/>
+                               Margin="0,0,10,0" />
 
                     <NumericUpDown Grid.Column="1"
-                                  Value="{Binding ScaleBarLeftMargin}"
-                                  Minimum="10"
-                                  Maximum="4000"
-                                  Increment="100"
-                                  Width="150"
-                                  HorizontalContentAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  Padding="5"
-                                  FontSize="14"
-                                  FontWeight="SemiBold"
-                                  ButtonSpinnerLocation="Right"
-                                  ShowButtonSpinner="True"
-                                  AllowSpin="True"
-                                  ClipValueToMinMax="True"
-                                  FormatString="0"
-                                  IsEnabled="{Binding !!SelectedImageTask}">
-                        <NumericUpDown.Styles>
-                            <Style Selector="NumericUpDown /template/ TextBox">
-                                <Setter Property="Foreground" Value="Black"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            </Style>
-                        </NumericUpDown.Styles>
-                    </NumericUpDown>
-                </Grid>
-                
-                <Grid Grid.Row="2" ColumnDefinitions="200,200">
-
-                    <TextBlock Grid.Column="0"
-                               Text="Bottom:"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Stretch"
-                               Margin="0,0,10,0"/>
-
-                    <NumericUpDown Grid.Column="1"
-                                   Value="{Binding ScaleBarBottomMargin}"
+                                   Value="{Binding ScaleBarHorizontalOffset}"
                                    Minimum="10"
                                    Maximum="4000"
                                    Increment="100"
@@ -138,37 +128,55 @@
                                    IsEnabled="{Binding !!SelectedImageTask}">
                         <NumericUpDown.Styles>
                             <Style Selector="NumericUpDown /template/ TextBox">
-                                <Setter Property="Foreground" Value="Black"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                <Setter Property="Foreground" Value="Black" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
                             </Style>
                         </NumericUpDown.Styles>
                     </NumericUpDown>
                 </Grid>
-            </Grid>
 
-            <!-- Preview control buttons - in the third row -->
-            <StackPanel Grid.Row="3"
-                        Orientation="Horizontal"
-                        Margin="0,0,0,10"
+                <Grid ColumnDefinitions="200,200">
+
+                    <TextBlock Grid.Column="0"
+                               Text="Vertical offset:"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Stretch"
+                               Margin="0,0,10,0" />
+
+                    <NumericUpDown Grid.Column="1"
+                                   Value="{Binding ScaleBarVerticalOffset}"
+                                   Minimum="10"
+                                   Maximum="4000"
+                                   Increment="100"
+                                   Width="150"
+                                   HorizontalContentAlignment="Center"
+                                   VerticalContentAlignment="Center"
+                                   Padding="5"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   ButtonSpinnerLocation="Right"
+                                   ShowButtonSpinner="True"
+                                   AllowSpin="True"
+                                   ClipValueToMinMax="True"
+                                   FormatString="0"
+                                   IsEnabled="{Binding !!SelectedImageTask}">
+                        <NumericUpDown.Styles>
+                            <Style Selector="NumericUpDown /template/ TextBox">
+                                <Setter Property="Foreground" Value="Black" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </NumericUpDown.Styles>
+                    </NumericUpDown>
+                </Grid>
+            </StackPanel>
+            
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,0"
                         HorizontalAlignment="Left">
                 <CheckBox Content="Show Processed Preview" IsChecked="{Binding !IsOriginalPreview}" Margin="0,0,10,0" />
             </StackPanel>
-
-            <!-- Bottom buttons - in the fourth row -->
-            <StackPanel Grid.Row="4"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Bottom"
-                        Spacing="10"
-                        Margin="0,0,0,5">
-                <Button Content="Clear" Click="OnClearClicked" />
-                <Button Content="Reset output folder" Click="OnResetOutputDirectoryClicked" />
-                <Button Content="Add" Click="OnAddClicked" />
-                <Button Content="Process" Click="OnProcessClicked" />
-            </StackPanel>
-        </Grid>
+        </StackPanel>
     </Grid>
 </Window>
-
-

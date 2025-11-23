@@ -28,11 +28,17 @@ namespace ScaleBarOverlay
         private readonly FileDialogService _fileDialogService;
         private ImageTask? _selectedImageTask;
         private CancellationTokenSource? _previewCancellationTokenSource;
-        private int _scaleBarLeftMargin = 100;
-        private int _scaleBarBottomMargin = 100;
         private bool _isUpdatingPreview;
 
         private static readonly string[] AllowedFileExtensions = { ".jpg", ".jpeg", ".png", ".bmp", ".tiff" };
+
+        public IEnumerable<EdgeViewModel> EdgeOptions { get; } =
+        [
+            new() { CornerOption = CornerOption.TopLeft, DisplayName = "Top Left" },
+            new() { CornerOption = CornerOption.TopRight, DisplayName = "Top Right" },
+            new() { CornerOption = CornerOption.BottomLeft, DisplayName = "Bottom Left" },
+            new() { CornerOption = CornerOption.BottomRight, DisplayName = "Bottom Right" }
+        ];
 
         public ObservableCollection<ImageTask> ImageTasks
         {
@@ -44,37 +50,48 @@ namespace ScaleBarOverlay
             }
         }
 
-        // Newly added ScaleBarMargin property
-        public int ScaleBarLeftMargin
+        public ScaleBarLocation? ScaleBarLocation { get; } = new(CornerOption.BottomLeft, 100, 100);
+
+        public EdgeViewModel? SelectedEdge
         {
-            get => _scaleBarLeftMargin;
+            get => ScaleBarLocation == null
+                ? null
+                : EdgeOptions.FirstOrDefault(e => e.CornerOption == ScaleBarLocation.CornerOption);
             set
             {
-                if (_scaleBarLeftMargin == value) return;
+                if (value == null) return;
+                if (ScaleBarLocation == null) return;
 
-                _scaleBarLeftMargin = value;
-                OnPropertyChanged();
-
-                // When the margin changes, if there is a selected task, update its margin and refresh the preview
-                if (_selectedImageTask == null) return;
-
+                ScaleBarLocation.CornerOption = value.CornerOption;
+                
                 _ = UpdatePreviewImage();
             }
         }
 
-        public int ScaleBarBottomMargin
+        public int ScaleBarVerticalOffset
         {
-            get => _scaleBarBottomMargin;
+            get => ScaleBarLocation?.VerticalOffset ?? 0;
             set
             {
-                if (_scaleBarBottomMargin == value) return;
+                if (ScaleBarLocation == null) return;
 
-                _scaleBarBottomMargin = value;
+                ScaleBarLocation.VerticalOffset = value;
                 OnPropertyChanged();
+                
+                _ = UpdatePreviewImage();
+            }
+        }
 
-                // When the margin changes, if there is a selected task, update its margin and refresh the preview
-                if (_selectedImageTask == null) return;
+        public int ScaleBarHorizontalOffset
+        {
+            get => ScaleBarLocation?.HorizontalOffset ?? 0;
+            set
+            {
+                if (ScaleBarLocation == null) return;
 
+                ScaleBarLocation.HorizontalOffset = value;
+                OnPropertyChanged();
+                
                 _ = UpdatePreviewImage();
             }
         }
@@ -88,11 +105,6 @@ namespace ScaleBarOverlay
 
                 _selectedImageTask = value;
                 OnPropertyChanged();
-
-                // When selecting a new task, update the margin controller value
-                if (value == null) return;
-
-                OnPropertyChanged(nameof(ScaleBarLeftMargin));
             }
         }
 
@@ -222,7 +234,7 @@ namespace ScaleBarOverlay
                         newTasks = ImageTaskService.CreateImageTasks(files, importConfig.MagnificationOption,
                             importConfig.Alignment, importConfig.DestinationDirectory);
                     }
-                    
+
                     int currentImageCount = ImageTasks.Count;
 
                     await Dispatcher.UIThread.InvokeAsync(() =>
@@ -231,7 +243,7 @@ namespace ScaleBarOverlay
                         {
                             ImageTasks.Add(task);
                         }
-                        
+
                         // Auto select the first newly added image
                         ImagesDataGrid.SelectedIndex = currentImageCount;
                     });
@@ -253,11 +265,10 @@ namespace ScaleBarOverlay
             await Task.Run(async () =>
             {
                 var config = ConfigService.LoadConfig();
-                config.ScaleBarBottomMargin = ScaleBarBottomMargin;
-                config.ScaleBarLeftMargin = ScaleBarLeftMargin;
+                config.ScaleBarLocation = ScaleBarLocation;
                 ConfigService.SaveConfig(config);
-                
-                await ImageTaskService.ProcessAllTasksAsync(ImageTasks, _scaleBarLeftMargin, _scaleBarBottomMargin);
+
+                await ImageTaskService.ProcessAllTasksAsync(ImageTasks, ScaleBarLocation);
             });
 
             await MessageBoxManager
@@ -433,8 +444,7 @@ namespace ScaleBarOverlay
                 try
                 {
                     processedImage =
-                        await ImageProcessorService.ProcessImageAsync(task, _scaleBarLeftMargin, _scaleBarBottomMargin,
-                            512);
+                        await ImageProcessorService.ProcessImageAsync(task, ScaleBarLocation, 512);
 
                     if (cancellationToken.IsCancellationRequested)
                         return;
@@ -548,7 +558,7 @@ namespace ScaleBarOverlay
                         });
                         var importConfig = await importOptionsDialog.ShowDialog<ImportConfig?>(this);
                         if (importConfig == null) return;
-                        
+
                         selectedTask.Magnification = importConfig.MagnificationOption;
                         selectedTask.AlignmentOption = importConfig.Alignment;
 
@@ -556,6 +566,11 @@ namespace ScaleBarOverlay
                     }
                 }
             }
+        }
+
+        private async void ScaleBarEdgeLocation_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            await UpdatePreviewImage();
         }
     }
 }

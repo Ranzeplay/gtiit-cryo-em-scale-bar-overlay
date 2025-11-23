@@ -53,7 +53,7 @@ public partial class ImportOptionsDialog : Window
             DestinationDirectory = DestinationPathTextBox.Text ?? "",
             Alignment = ScaleTextAlignmentComboBox.SelectionBoxItem as AlignmentViewModel is { } vm
                 ? vm.AlignmentOption
-                : AlignmentOption.Left
+                : AlignmentOption.Center
         };
 
         var config = ConfigService.LoadConfig();

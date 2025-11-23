@@ -27,8 +27,7 @@ public class ConfigService
                 DestinationDirectory = "",
                 Alignment = AlignmentOption.Center
             },
-            ScaleBarLeftMargin = 100,
-            ScaleBarBottomMargin = 100
+            ScaleBarLocation = new ScaleBarLocation(CornerOption.BottomLeft, 100, 100)
         };
         
         if (!File.Exists(ConfigPath))
