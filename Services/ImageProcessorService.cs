@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using ScaleBarOverlay.Models;
@@ -101,5 +102,9 @@ namespace ScaleBarOverlay.Services
                     break;
             }
         }
+
+        public static MagnificationOption? DetectMagnificationOption(string imagePath) =>
+            MagnificationOption.TemplateOptions.FirstOrDefault(option =>
+                imagePath.Contains(option.DisplayText, StringComparison.CurrentCultureIgnoreCase));
     }
 }
