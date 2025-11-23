@@ -27,9 +27,7 @@ namespace ScaleBarOverlay
         private ObservableCollection<ImageTask> _imageTasks = new();
         private readonly FileDialogService _fileDialogService;
         private ImageTask? _selectedImageTask;
-        private bool _isOriginalPreview = false;
         private CancellationTokenSource? _previewCancellationTokenSource;
-        private bool _isPreviewLoading;
         private int _scaleBarLeftMargin = 100;
         private int _scaleBarBottomMargin = 100;
         private bool _isUpdatingPreview;
@@ -100,24 +98,24 @@ namespace ScaleBarOverlay
 
         public bool IsOriginalPreview
         {
-            get => _isOriginalPreview;
+            get;
             set
             {
-                if (_isOriginalPreview == value) return;
+                if (field == value) return;
 
-                _isOriginalPreview = value;
+                field = value;
                 OnPropertyChanged();
                 _ = UpdatePreviewImage();
             }
-        }
+        } = false;
 
         public bool IsPreviewLoading
         {
-            get => _isPreviewLoading;
+            get;
             set
             {
-                if (_isPreviewLoading == value) return;
-                _isPreviewLoading = value;
+                if (field == value) return;
+                field = value;
                 OnPropertyChanged();
             }
         }
@@ -224,14 +222,19 @@ namespace ScaleBarOverlay
                         newTasks = ImageTaskService.CreateImageTasks(files, importConfig.MagnificationOption,
                             importConfig.Alignment, importConfig.DestinationDirectory);
                     }
+                    
+                    int currentImageCount = ImageTasks.Count;
 
-                    Dispatcher.UIThread.InvokeAsync(() =>
+                    await Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         foreach (var task in newTasks)
                         {
                             ImageTasks.Add(task);
                         }
-                    }).Wait();
+                        
+                        // Auto select the first newly added image
+                        ImagesDataGrid.SelectedIndex = currentImageCount;
+                    });
 
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
                 }
@@ -283,17 +286,15 @@ namespace ScaleBarOverlay
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private Bitmap? _previewImageSource;
-
         public Bitmap? PreviewImageSource
         {
-            get => _previewImageSource;
+            get;
             set
             {
-                if (_previewImageSource != value)
+                if (field != value)
                 {
-                    _previewImageSource?.Dispose(); // Release old bitmap resources
-                    _previewImageSource = value;
+                    field?.Dispose(); // Release old bitmap resources
+                    field = value;
                     OnPropertyChanged();
                 }
             }
