@@ -9,7 +9,8 @@ namespace ScaleBarOverlay.Services
     {
         public async Task<IReadOnlyList<IStorageFile>> OpenImageFilesAsync()
         {
-            return await parentWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            AppLogger.Info(nameof(FileDialogService), "Opening image file picker.");
+            var files = await parentWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = true,
                 Title = "Choose Images",
@@ -21,19 +22,25 @@ namespace ScaleBarOverlay.Services
                     }
                 ]
             });
+            AppLogger.Info(nameof(FileDialogService), $"Image picker returned {files.Count} file(s).");
+            return files;
         }
 
         public async Task<IReadOnlyList<IStorageFolder>> OpenFolderAsync(string title = "Select Output Folder")
         {
-            return await parentWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            AppLogger.Info(nameof(FileDialogService), $"Opening folder picker with title '{title}'.");
+            var folders = await parentWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 Title = title,
             });
+            AppLogger.Info(nameof(FileDialogService), $"Folder picker returned {folders.Count} folder(s).");
+            return folders;
         }
         
         public async Task<IStorageFile?> SaveFile(string title = "Choose Output File", string defaultFilePath = "output.png")
         {
-            return await parentWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            AppLogger.Info(nameof(FileDialogService), $"Opening save file picker with suggested name '{defaultFilePath}'.");
+            var file = await parentWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = title,
                 SuggestedFileName = defaultFilePath,
@@ -45,6 +52,8 @@ namespace ScaleBarOverlay.Services
                     }
                 ]
             });
+            AppLogger.Info(nameof(FileDialogService), file == null ? "Save file picker canceled." : "Save file picker selected a file.");
+            return file;
         }
     }
 }

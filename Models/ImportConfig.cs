@@ -5,6 +5,11 @@ namespace ScaleBarOverlay.Models;
 
 public class ImportConfig
 {
+    public ImportConfig()
+    {
+        Services.AppLogger.Info(nameof(ImportConfig), "ImportConfig instance created.");
+    }
+
     [JsonIgnore]
     public MagnificationOption MagnificationOption
     {

@@ -136,6 +136,7 @@ namespace ScaleBarOverlay
         {
             InitializeComponent();
             DataContext = this;
+            AppLogger.Info(nameof(MainWindow), "Main window initialized.");
 
             // Initialize services
             _fileDialogService = new FileDialogService(this);
@@ -180,6 +181,7 @@ namespace ScaleBarOverlay
             {
                 e.DragEffects = DragDropEffects.Copy;
                 e.Handled = true;
+                AppLogger.Info(nameof(MainWindow), $"Drop event accepted with {items.Count} file(s).");
 
                 await AddFiles(items.OfType<IStorageFile>().ToList());
             }
@@ -189,6 +191,7 @@ namespace ScaleBarOverlay
         {
             try
             {
+                AppLogger.Info(nameof(MainWindow), "Add images button clicked.");
                 using (Enable.DeadlockDetection(DeadlockDetectionMode.AlsoPotentialDeadlocks))
                 {
                     var files = await _fileDialogService.OpenImageFilesAsync();
@@ -197,6 +200,7 @@ namespace ScaleBarOverlay
             }
             catch (Exception ex)
             {
+                AppLogger.Error(nameof(MainWindow), "Failed while adding images.", ex);
                 await MessageBoxManager
                     .GetMessageBoxStandard("Error", $"Error adding images: {ex.Message}")
                     .ShowWindowDialogAsync(this);
@@ -210,11 +214,13 @@ namespace ScaleBarOverlay
                 using (Enable.DeadlockDetection(DeadlockDetectionMode.AlsoPotentialDeadlocks))
                 {
                     if (files.Count == 0) return;
+                    AppLogger.Info(nameof(MainWindow), $"Starting add workflow for {files.Count} file(s).");
 
                     var importOptionsDialog = new ImportOptionsDialog();
                     var importConfig = await importOptionsDialog.ShowDialog<ImportConfig?>(this);
                     if (importConfig == null)
                     {
+                        AppLogger.Warn(nameof(MainWindow), "Import canceled because no magnification option was selected.");
                         await MessageBoxManager
                             .GetMessageBoxStandard("Error", "No magnification option selected.")
                             .ShowWindowDialogAsync(this);
@@ -249,10 +255,12 @@ namespace ScaleBarOverlay
                     });
 
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
+                    AppLogger.Info(nameof(MainWindow), $"Image task list now contains {ImageTasks.Count} item(s).");
                 }
             }
             catch (Exception ex)
             {
+                AppLogger.Error(nameof(MainWindow), "Error while creating image tasks.", ex);
                 await MessageBoxManager
                     .GetMessageBoxStandard("Error", $"Error adding images: {ex.Message}")
                     .ShowAsPopupAsync(this);
@@ -261,6 +269,7 @@ namespace ScaleBarOverlay
 
         private async void OnProcessClicked(object? sender, RoutedEventArgs e)
         {
+            AppLogger.Info(nameof(MainWindow), $"Processing requested for {ImageTasks.Count} task(s).");
             // Process images in the background thread to avoid blocking the UI
             await Task.Run(async () =>
             {
@@ -288,6 +297,7 @@ namespace ScaleBarOverlay
             }
 
             _imageTasks.Clear();
+            AppLogger.Info(nameof(MainWindow), "Processing completed and task list cleared.");
         }
 
         public new event PropertyChangedEventHandler? PropertyChanged;
@@ -316,6 +326,7 @@ namespace ScaleBarOverlay
             if (sender is not DataGrid { SelectedItem: ImageTask selectedTask }) return;
 
             SelectedImageTask = selectedTask;
+            AppLogger.Info(nameof(MainWindow), $"Selected image task changed to '{selectedTask.ImagePath}'.");
             // Update the margin to the selected task's margin value
             await UpdatePreviewImage();
         }
@@ -332,6 +343,7 @@ namespace ScaleBarOverlay
 
             try
             {
+                AppLogger.Info(nameof(MainWindow), $"Updating preview for '{_selectedImageTask.ImagePath}'.");
                 _isUpdatingPreview = true; // Set flag indicating preview is being updated
 
                 // Cancel any ongoing preview operations
@@ -373,12 +385,14 @@ namespace ScaleBarOverlay
                 catch (OperationCanceledException)
                 {
                     // Preview was canceled, do nothing
+                    AppLogger.Info(nameof(MainWindow), "Preview update canceled.");
                     IsPreviewLoading = false;
                 }
                 catch (Exception ex)
                 {
                     if (!cancellationToken.IsCancellationRequested)
                     {
+                        AppLogger.Error(nameof(MainWindow), "Failed while generating preview image.", ex);
                         await Dispatcher.UIThread.InvokeAsync(async () =>
                         {
                             PreviewImageSource = null;
@@ -392,6 +406,7 @@ namespace ScaleBarOverlay
             }
             catch (Exception ex)
             {
+                AppLogger.Error(nameof(MainWindow), "Unexpected error while updating preview image.", ex);
                 await MessageBoxManager
                     .GetMessageBoxStandard("Error", $"Error processing preview image: {ex.Message}")
                     .ShowWindowDialogAsync(this);
@@ -482,11 +497,13 @@ namespace ScaleBarOverlay
 
         private void OnClearClicked(object? sender, RoutedEventArgs e)
         {
+            AppLogger.Info(nameof(MainWindow), "Clear image list clicked.");
             _imageTasks.Clear();
         }
 
         private async void OnResetOutputDirectoryClicked(object? sender, RoutedEventArgs e)
         {
+            AppLogger.Info(nameof(MainWindow), "Reset output directory clicked.");
             var destinationFolders = await _fileDialogService.OpenFolderAsync();
             if (destinationFolders.Count == 0) return;
             var destinationFolder = destinationFolders[0];
@@ -507,6 +524,7 @@ namespace ScaleBarOverlay
             ImageTasks = new ObservableCollection<ImageTask>(tasks);
 
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageTasks)));
+            AppLogger.Info(nameof(MainWindow), "Output directory updated for all current tasks.");
         }
 
         private async void InputElement_OnDoubleTapped(object? sender, TappedEventArgs e)

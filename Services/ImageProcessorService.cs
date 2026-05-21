@@ -16,6 +16,7 @@ namespace ScaleBarOverlay.Services
     {
         public static async Task<Image> ProcessImageAsync(ImageTask task, ScaleBarLocation location, int? targetSize = null)
         {
+            AppLogger.Info(nameof(ImageProcessorService), $"Processing image '{task.ImagePath}' with output '{task.OutputPath}'.");
             // Load image
             await using var stream = new FileStream(task.ImagePath, FileMode.Open, FileAccess.Read);
             await using var memoryStream = new MemoryStream();
@@ -111,11 +112,13 @@ namespace ScaleBarOverlay.Services
                 ctx.Fill(Color.White, new RectangleF(barX, barY, totalWidth, barHeight));
             });
 
+            AppLogger.Info(nameof(ImageProcessorService), $"Image processing complete for '{task.ImagePath}'.");
             return image;
         }
 
         public static async Task SaveImageAsync(Image image, string outputPath)
         {
+            AppLogger.Info(nameof(ImageProcessorService), $"Saving processed image to '{outputPath}'.");
             // Save image according to file extension
             string ext = Path.GetExtension(outputPath).ToLowerInvariant();
             switch (ext)
@@ -134,10 +137,20 @@ namespace ScaleBarOverlay.Services
                     await image.SaveAsPngAsync(outputPath);
                     break;
             }
+            AppLogger.Info(nameof(ImageProcessorService), $"Saved image to '{outputPath}'.");
         }
 
         public static MagnificationOption? DetectMagnificationOption(string imagePath) =>
             MagnificationOption.TemplateOptions.FirstOrDefault(option =>
-                imagePath.Contains(option.DisplayText, StringComparison.CurrentCultureIgnoreCase));
+            {
+                var isMatch = imagePath.Contains(option.DisplayText, StringComparison.CurrentCultureIgnoreCase);
+                if (isMatch)
+                {
+                    AppLogger.Info(nameof(ImageProcessorService),
+                        $"Detected magnification '{option.DisplayText}' from '{imagePath}'.");
+                }
+
+                return isMatch;
+            });
     }
 }

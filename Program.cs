@@ -1,5 +1,6 @@
 ﻿using System;
 using Avalonia;
+using ScaleBarOverlay.Services;
 
 namespace ScaleBarOverlay;
 
@@ -9,13 +10,25 @@ internal static class Program
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
+    public static void Main(string[] args)
+    {
+        AppLogger.Info(nameof(Program), $"Application starting with {args.Length} argument(s).");
+        try
+        {
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+            AppLogger.Info(nameof(Program), "Application shutdown completed.");
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error(nameof(Program), "Unhandled fatal exception during startup/runtime.", ex);
+            throw;
+        }
+    }
 
     // Avalonia configuration, don't remove; also used by visual designer.
     private static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace();
+            .LogToTextWriter(AppLogger.CreateAvaloniaLogWriter());
 }

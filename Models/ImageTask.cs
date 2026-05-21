@@ -4,9 +4,19 @@ using System.Runtime.CompilerServices;
 
 namespace ScaleBarOverlay.Models;
 
-public class ImageTask(string imagePath, MagnificationOption magnification, string outputPath, AlignmentOption alignmentOption) : INotifyPropertyChanged
+public class ImageTask : INotifyPropertyChanged
 {
-    public string ImagePath { get; set; } = imagePath;
+    public ImageTask(string imagePath, MagnificationOption magnification, string outputPath, AlignmentOption alignmentOption)
+    {
+        ImagePath = imagePath;
+        Magnification = magnification;
+        OutputPath = outputPath;
+        AlignmentOption = alignmentOption;
+
+        Services.AppLogger.Info(nameof(ImageTask), $"Created task for '{ImagePath}' -> '{OutputPath}'.");
+    }
+
+    public string ImagePath { get; set; }
     
     public string ImageName => System.IO.Path.GetFileName(ImagePath);
 
@@ -14,19 +24,19 @@ public class ImageTask(string imagePath, MagnificationOption magnification, stri
     {
         get;
         set => SetField(ref field, value);
-    } = magnification;
+    }
 
     public AlignmentOption AlignmentOption
     {
         get;
         set => SetField(ref field, value);
-    } = alignmentOption;
+    }
 
     public string OutputPath
     {
         get;
         set => SetField(ref field, value);
-    } = outputPath;
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -39,6 +49,7 @@ public class ImageTask(string imagePath, MagnificationOption magnification, stri
     {
         if (EqualityComparer<T>.Default.Equals(field, value)) return false;
         field = value;
+        Services.AppLogger.Info(nameof(ImageTask), $"Property '{propertyName}' updated for '{ImagePath}'.");
         OnPropertyChanged(propertyName);
         return true;
     }
