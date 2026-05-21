@@ -16,6 +16,7 @@ public class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         AppLogger.Info(nameof(App), "Framework initialization completed.");
+        GlobalExceptionHandler.RegisterUiThreadHandler();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = new MainWindow();

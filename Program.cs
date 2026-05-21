@@ -12,6 +12,7 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        GlobalExceptionHandler.RegisterGlobalHandlers();
         AppLogger.Info(nameof(Program), $"Application starting with {args.Length} argument(s).");
         try
         {
@@ -20,7 +21,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            AppLogger.Error(nameof(Program), "Unhandled fatal exception during startup/runtime.", ex);
+            GlobalExceptionHandler.HandleException(ex, "Program.Main");
             throw;
         }
     }
