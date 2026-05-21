@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -8,15 +9,15 @@ public class ImageTask : INotifyPropertyChanged
 {
     public ImageTask(string imagePath, MagnificationOption magnification, string outputPath, AlignmentOption alignmentOption)
     {
-        ImagePath = imagePath;
+        ImagePath = Uri.UnescapeDataString(imagePath);
         Magnification = magnification;
-        OutputPath = outputPath;
+        OutputPath = Uri.UnescapeDataString(outputPath);
         AlignmentOption = alignmentOption;
 
         Services.AppLogger.Info(nameof(ImageTask), $"Created task for '{ImagePath}' -> '{OutputPath}'.");
     }
 
-    public string ImagePath { get; set; }
+    public string ImagePath { get; }
     
     public string ImageName => System.IO.Path.GetFileName(ImagePath);
 
@@ -35,7 +36,7 @@ public class ImageTask : INotifyPropertyChanged
     public string OutputPath
     {
         get;
-        set => SetField(ref field, value);
+        set => SetField(ref field, Uri.UnescapeDataString(value));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
